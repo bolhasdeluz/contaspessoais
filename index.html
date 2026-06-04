@@ -458,6 +458,17 @@ select option{background:#1c1c1c}
   <div class="macts"><button class="btn bcn" onclick="fClose('ov-dj')">Cancelar</button><button class="btn bpu" onclick="svDesejo()">Salvar</button></div>
 </div></div>
 
+<!-- MODAL: DESPESA ANUAL -->
+<div class="ov fh" id="ov-dan" onclick="closeOv('ov-dan',event)"><div class="sfull">
+  <div style="padding:0 20px;flex-shrink:0"><div class="shdl"></div><div class="stit" id="dan-tit">Editar Ano</div></div>
+  <div class="sbody" style="padding:0 20px">
+    <div class="reprow"><span class="rlb">Replicar R$</span><input type="number" id="dan-rep" placeholder="valor" step="0.01" min="0"/><button onclick="repDanAll()">Aplicar a todos</button></div>
+    <div class="mrows" id="dan-rows"></div>
+    <div style="height:16px"></div>
+  </div>
+  <div class="sfoot" style="padding:12px 20px 40px;border-top:1px solid var(--bd)"><div class="macts"><button class="btn bcn" onclick="fClose('ov-dan')">Cancelar</button><button class="btn bsv" onclick="svDanual()">Salvar Ano</button></div></div>
+</div></div>
+
 <!-- MODAL: CONFIRM -->
 <div class="ov" id="ov-del"><div class="sheet" style="max-width:340px;border-radius:14px;margin:0 auto 20px">
   <div class="shdl"></div><div class="stit">Remover item?</div>
@@ -481,6 +492,7 @@ let tab='desp',selCard=null,filt='todos',showDj=true,fabOpen=false;
 let cTipo='fixo',cCardType='credito',ctxParc=false,rdRec=true,rdaRec=true;
 let bMode='one',bSelMonths=new Set();
 let eId=null,eCtxId=null,eCRecId=null,eCRanId=null,eRdId=null,eRdAnId=null,eDjId=null,eCCfgId=null;
+let eDanNome=null,eDanCat=null,eDanTipo=null;
 let delId=null,delT=null,delGrupoId=null;
 
 // ====== DATA ======
@@ -725,7 +737,7 @@ function rDesp(){
           <div class="bdgs">${i.recorrente?'<span class="bdg rec">Recorrente</span>':''}${i.tipo==='extra'?'<span class="bdg ext">Extra</span>':''}</div>
           ${i.obs?`<div class="iobs">${esc(i.obs)}</div>`:''}
         </div>
-        <div class="iacts"><button class="icb" onclick="openS('${i.id}')">&#9998;</button><button class="icb del" onclick="askDel('${i.id}','d')">&#10005;</button></div>
+        <div class="iacts"><button class="icb" onclick="openS('${i.id}')">&#9998;</button>${i.recorrente?`<button class="icb" onclick="openDan('${i.id}')" title="Editar ano">&#128197;</button>`:''}<button class="icb del" onclick="askDel('${i.id}','d')">&#10005;</button></div>
       </div>`;
     });
     h+=`</div>`;
@@ -1011,7 +1023,8 @@ function setBMode(m,btn){
   document.getElementById('bmode-multi').className=m==='multi'?'on':'';
   const mbox=document.getElementById('bk-months');
   mbox.style.display=m==='multi'?'block':'none';
-  if(m==='multi')renderBkChips();
+  if(m==='multi'){renderBkChips();}
+  rBatch();
 }
 function renderBkChips(){
   const[cy]=cm.split('-').map(Number);
@@ -1040,26 +1053,15 @@ function setBMesVal(idx,k,val){
   batchItems[idx]._edited.add(k);
 }
 function rBatch(){
-  const[cy]=cm.split('-').map(Number);
   const sortedMeses=[...bSelMonths].sort();
   document.getElementById('bklist').innerHTML=batchItems.map((item,idx)=>{
-    const mesesGrid=bMode==='multi'&&sortedMeses.length?`
-      <div class="fg" style="margin-top:4px">
-        <label>Valor por m&#234;s</label>
-        <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px">
-          ${sortedMeses.map(k=>{
-            const[,m]=k.split('-').map(Number);
-            const v=item.valMes[k]!=null?item.valMes[k]:item.valor||'';
-            return`<div style="display:grid;grid-template-columns:42px 1fr;align-items:center;gap:8px;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;padding:6px 10px"><span style="font-size:12px;font-weight:600;color:var(--dim)">${MPT[m-1]}</span><input type="number" value="${v}" step="0.01" min="0" placeholder="0,00" oninput="setBMesVal(${idx},'${k}',this.value)" style="font-family:var(--mono);font-size:13px;padding:4px 8px"/></div>`;
-          }).join('')}
-        </div>
-      </div>`:
-      `<div class="fg2"><div><label>Valor (R$)</label><input type="number" value="${item.valor}" oninput="updBDefault(${idx},this.value)" step="0.01" min="0" placeholder="0,00"/></div><div><label>Categoria</label><select onchange="batchItems[${idx}].categoria=this.value">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${k===item.categoria?'selected':''}>${v}</option>`).join('')}</select></div></div>`;
-    const catSelect=bMode==='multi'?`<div class="fg2" style="margin-top:0"><div><label>Valor padr&#227;o (R$)</label><input type="number" value="${item.valor}" oninput="updBDefault(${idx},this.value)" step="0.01" min="0" placeholder="0,00"/></div><div><label>Categoria</label><select onchange="batchItems[${idx}].categoria=this.value">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${k===item.categoria?'selected':''}>${v}</option>`).join('')}</select></div></div>`:
-      `<div class="fg2"><div><label>Valor (R$)</label><input type="number" value="${item.valor}" oninput="updBDefault(${idx},this.value)" step="0.01" min="0" placeholder="0,00"/></div><div><label>Categoria</label><select onchange="batchItems[${idx}].categoria=this.value">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${k===item.categoria?'selected':''}>${v}</option>`).join('')}</select></div></div>`;
+    const catSel=Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${k===item.categoria?'selected':''}>${v}</option>`).join('');
+    const mesGrid=bMode==='multi'&&sortedMeses.length?`<div class="fg" style="margin-top:2px"><label>Valor por m&#234;s</label><div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">${sortedMeses.map(k=>{const[,m]=k.split('-').map(Number);const v=item.valMes[k]!=null?item.valMes[k]:(item.valor||'');return`<div style="display:grid;grid-template-columns:42px 1fr;align-items:center;gap:8px;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;padding:6px 10px"><span style="font-size:12px;font-weight:600;color:var(--dim)">${MPT[m-1]}</span><input type="number" value="${v}" step="0.01" min="0" placeholder="0,00" oninput="setBMesVal(${idx},'${k}',this.value)" style="font-family:var(--mono);font-size:13px;padding:5px 8px"/></div>`;}).join('')}</div></div>`:'';
+    const valLabel=bMode==='multi'&&sortedMeses.length?'Valor padr&#227;o (R$)':'Valor (R$)';
     return`<div class="brow"><div class="bnum">#${idx+1}</div><button class="brem" onclick="remBR('${item.id}')">&#10005;</button>
       <div class="fg"><label>Nome</label><input type="text" value="${esc(item.nome)}" oninput="batchItems[${idx}].nome=this.value" placeholder="Ex: Aluguel"/></div>
-      ${bMode==='multi'?catSelect+mesesGrid:catSelect}
+      <div class="fg2"><div><label>${valLabel}</label><input type="number" value="${item.valor}" oninput="updBDefault(${idx},this.value)" step="0.01" min="0" placeholder="0,00"/></div><div><label>Categoria</label><select onchange="batchItems[${idx}].categoria=this.value">${catSel}</select></div></div>
+      ${mesGrid}
       <div style="margin-top:10px"><label>Tipo</label><div class="trow"><button class="${item.tipo==='fixo'?'on fixo':'fixo'}" onclick="setBT('${item.id}','fixo',this)">&#128260; Fixo</button><button class="${item.tipo==='extra'?'on extra':'extra'}" onclick="setBT('${item.id}','extra',this)">&#11088; Extra</button></div></div>
     </div>`;
   }).join('');
@@ -1079,6 +1081,50 @@ function svBulk(){
     });
   });
   saveAll();fClose('ov-b');if(n)rContent();
+}
+
+// ====== DESPESA ANUAL ======
+function openDan(id){
+  const item=(D[cm]||[]).find(x=>x.id===id);if(!item)return;
+  eDanNome=item.nome;eDanCat=item.categoria;eDanTipo=item.tipo;
+  const[cy]=cm.split('-').map(Number);
+  document.getElementById('dan-tit').textContent=`${item.nome} \u2014 ${cy}`;
+  document.getElementById('dan-rep').value='';
+  const nomeKey=item.nome.trim().toLowerCase();
+  document.getElementById('dan-rows').innerHTML=Array.from({length:12},(_,i)=>{
+    const k=ym(cy,i+1);
+    const entry=(D[k]||[]).find(x=>x.nome.trim().toLowerCase()===nomeKey&&x.recorrente);
+    const val=entry?.valor||'';const st=entry?.status||'pendente';
+    return`<div class="mrow ${k===cm?'cur':''}" id="danr-${k}">
+      <span class="mn">${MPT[i]}</span>
+      <input type="number" id="danv-${k}" value="${val}" step="0.01" min="0" placeholder="\u2014"/>
+      <div class="spill">
+        <button class="${st==='pago'?'on sp':'sp'}" onclick="setDanS('${k}','pago',this)">&#10003;</button>
+        <button class="${st!=='pago'?'on sd':'sd'}" onclick="setDanS('${k}','pendente',this)">&#9203;</button>
+      </div></div>`;
+  }).join('');
+  openOv('ov-dan');
+}
+function setDanS(k,st,btn){const p=btn.closest('.spill');p.querySelectorAll('button').forEach(b=>{b.className=b===btn?(st==='pago'?'on sp':'on sd'):(st==='pago'?'sd':'sp')})}
+function repDanAll(){const v=document.getElementById('dan-rep').value;if(!v)return;const[cy]=cm.split('-').map(Number);for(let i=1;i<=12;i++){const el=document.getElementById(`danv-${ym(cy,i)}`);if(el)el.value=v}}
+function svDanual(){
+  const[cy]=cm.split('-').map(Number);
+  const nomeKey=eDanNome.trim().toLowerCase();
+  for(let i=1;i<=12;i++){
+    const k=ym(cy,i);
+    const vEl=document.getElementById(`danv-${k}`);if(!vEl)continue;
+    const val=parseFloat(vEl.value);
+    const pill=document.querySelector(`#danr-${k} .spill`);
+    const stBtn=pill?.querySelector('button.on');
+    const st=stBtn?.classList.contains('sp')?'pago':'pendente';
+    if(!D[k])D[k]=[];
+    const existing=D[k].find(x=>x.nome.trim().toLowerCase()===nomeKey&&x.recorrente);
+    if(!isNaN(val)&&val>0){
+      if(existing)Object.assign(existing,{valor:val,status:st});
+      else D[k].push({id:uid(),nome:eDanNome,valor:val,categoria:eDanCat,tipo:eDanTipo||'fixo',recorrente:true,status:st,obs:'',createdAt:new Date().toISOString()});
+    }
+  }
+  saveAll();fClose('ov-dan');rContent();
 }
 
 // ====== BATCH RECORRENTES ======
@@ -1335,7 +1381,7 @@ function fClose(id){
   const r={['ov-s']:()=>eId=null,['ov-ctx']:()=>eCtxId=null,['ov-crec']:()=>eCRecId=null,['ov-cran']:()=>eCRanId=null,['ov-rd']:()=>eRdId=null,['ov-rdan']:()=>eRdAnId=null,['ov-dj']:()=>eDjId=null,['ov-ccfg']:()=>eCCfgId=null,['ov-del']:()=>{delId=null;delT=null;delGrupoId=null}};
   if(r[id])r[id]();
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape')['ov-s','ov-b','ov-br','ov-ccfg','ov-ctx','ov-crec','ov-cran','ov-vr','ov-rd','ov-rdan','ov-dj','ov-del'].forEach(id=>{if(document.getElementById(id)?.classList.contains('on'))fClose(id)})});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')['ov-s','ov-b','ov-br','ov-dan','ov-ccfg','ov-ctx','ov-crec','ov-cran','ov-vr','ov-rd','ov-rdan','ov-dj','ov-del'].forEach(id=>{if(document.getElementById(id)?.classList.contains('on'))fClose(id)})});
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 

@@ -551,6 +551,38 @@ function seedD(){
   if(changed)saveAll();
 }
 
+// ====== SEED RENDA RECORRENTES ======
+function seedRD(){
+  let changed=false;
+  RD.filter(r=>r.recorrente).forEach(r=>{
+    if(r.meses?.[cm]!=null)return;
+    const past=Object.keys(r.meses||{}).filter(m=>m<cm).sort().reverse();
+    if(!past.length)return;
+    const ref=r.meses[past[0]];
+    if(!ref)return;
+    if(!r.meses)r.meses={};
+    r.meses[cm]={valor:ref.valor,status:'pendente'};
+    changed=true;
+  });
+  if(changed)saveAll();
+}
+
+// ====== SEED CARD RECORRENTES ======
+function seedCardRec(){
+  let changed=false;
+  cardRec.forEach(r=>{
+    if(r.meses?.[cm]!=null)return;
+    const past=Object.keys(r.meses||{}).filter(m=>m<cm).sort().reverse();
+    if(!past.length)return;
+    const ref=r.meses[past[0]];
+    if(!ref)return;
+    if(!r.meses)r.meses={};
+    r.meses[cm]={valor:ref.valor,status:'pendente'};
+    changed=true;
+  });
+  if(changed)saveAll();
+}
+
 // ====== FILTERS ======
 function setF(f,btn){filt=f;document.querySelectorAll('.fb:not(.brec)').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rContent()}
 function applyFD(items){
@@ -703,6 +735,7 @@ function rDesp(){
 
 // ====== RENDER CARTÃO ======
 function rCart(){
+  seedCardRec();
   // Card selector
   const selEl=document.getElementById('card-sel');
   let chips=cards.map(c=>`<div class="cchip ${selCard===c.id?'on':''}" onclick="selC('${c.id}')">${c.nome}</div>`).join('');
@@ -850,6 +883,7 @@ function rVR(){
 
 // ====== RENDER RENDA ======
 function rRend(){
+  seedRD();
   const recEl=document.getElementById('rend-rec');
   const listEl=document.getElementById('rend-list');
   const recs=RD.filter(r=>r.recorrente);
@@ -986,28 +1020,61 @@ function renderBkChips(){
     return`<div class="mchip ${bSelMonths.has(k)?'on':''}" onclick="togBkMon('${k}',this)">${MPT[i]}</div>`;
   }).join('');
 }
-function togBkMon(k,el){if(bSelMonths.has(k))bSelMonths.delete(k);else bSelMonths.add(k);el.classList.toggle('on',bSelMonths.has(k))}
-function mkBR(){return{id:uid(),nome:'',valor:'',categoria:'Outros',tipo:'fixo'}}
+function togBkMon(k,el){
+  if(bSelMonths.has(k))bSelMonths.delete(k);
+  else{bSelMonths.add(k);batchItems.forEach(i=>{if(i.valMes[k]==null)i.valMes[k]=parseFloat(i.valor)||0})}
+  el.classList.toggle('on',bSelMonths.has(k));
+  rBatch();
+}
+function mkBR(){return{id:uid(),nome:'',valor:'',categoria:'Outros',tipo:'fixo',valMes:{}}}
 function addBR(){batchItems.push(mkBR());rBatch();setTimeout(()=>{const b=document.getElementById('bk-body');b.scrollTop=b.scrollHeight},60)}
 function remBR(id){batchItems=batchItems.filter(i=>i.id!==id);if(!batchItems.length)batchItems.push(mkBR());rBatch()}
+function updBDefault(idx,val){
+  batchItems[idx].valor=val;
+  // preenche meses que ainda não foram editados individualmente
+  [...bSelMonths].forEach(k=>{if(!batchItems[idx]._edited?.has(k))batchItems[idx].valMes[k]=parseFloat(val)||0});
+}
+function setBMesVal(idx,k,val){
+  batchItems[idx].valMes[k]=parseFloat(val)||0;
+  if(!batchItems[idx]._edited)batchItems[idx]._edited=new Set();
+  batchItems[idx]._edited.add(k);
+}
 function rBatch(){
-  document.getElementById('bklist').innerHTML=batchItems.map((item,idx)=>`
-    <div class="brow"><div class="bnum">#${idx+1}</div><button class="brem" onclick="remBR('${item.id}')">&#10005;</button>
+  const[cy]=cm.split('-').map(Number);
+  const sortedMeses=[...bSelMonths].sort();
+  document.getElementById('bklist').innerHTML=batchItems.map((item,idx)=>{
+    const mesesGrid=bMode==='multi'&&sortedMeses.length?`
+      <div class="fg" style="margin-top:4px">
+        <label>Valor por m&#234;s</label>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px">
+          ${sortedMeses.map(k=>{
+            const[,m]=k.split('-').map(Number);
+            const v=item.valMes[k]!=null?item.valMes[k]:item.valor||'';
+            return`<div style="display:grid;grid-template-columns:42px 1fr;align-items:center;gap:8px;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;padding:6px 10px"><span style="font-size:12px;font-weight:600;color:var(--dim)">${MPT[m-1]}</span><input type="number" value="${v}" step="0.01" min="0" placeholder="0,00" oninput="setBMesVal(${idx},'${k}',this.value)" style="font-family:var(--mono);font-size:13px;padding:4px 8px"/></div>`;
+          }).join('')}
+        </div>
+      </div>`:
+      `<div class="fg2"><div><label>Valor (R$)</label><input type="number" value="${item.valor}" oninput="updBDefault(${idx},this.value)" step="0.01" min="0" placeholder="0,00"/></div><div><label>Categoria</label><select onchange="batchItems[${idx}].categoria=this.value">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${k===item.categoria?'selected':''}>${v}</option>`).join('')}</select></div></div>`;
+    const catSelect=bMode==='multi'?`<div class="fg2" style="margin-top:0"><div><label>Valor padr&#227;o (R$)</label><input type="number" value="${item.valor}" oninput="updBDefault(${idx},this.value)" step="0.01" min="0" placeholder="0,00"/></div><div><label>Categoria</label><select onchange="batchItems[${idx}].categoria=this.value">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${k===item.categoria?'selected':''}>${v}</option>`).join('')}</select></div></div>`:
+      `<div class="fg2"><div><label>Valor (R$)</label><input type="number" value="${item.valor}" oninput="updBDefault(${idx},this.value)" step="0.01" min="0" placeholder="0,00"/></div><div><label>Categoria</label><select onchange="batchItems[${idx}].categoria=this.value">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${k===item.categoria?'selected':''}>${v}</option>`).join('')}</select></div></div>`;
+    return`<div class="brow"><div class="bnum">#${idx+1}</div><button class="brem" onclick="remBR('${item.id}')">&#10005;</button>
       <div class="fg"><label>Nome</label><input type="text" value="${esc(item.nome)}" oninput="batchItems[${idx}].nome=this.value" placeholder="Ex: Aluguel"/></div>
-      <div class="fg2"><div><label>Valor</label><input type="number" value="${item.valor}" oninput="batchItems[${idx}].valor=this.value" step="0.01" min="0" placeholder="0,00"/></div><div><label>Categoria</label><select onchange="batchItems[${idx}].categoria=this.value">${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${k===item.categoria?'selected':''}>${v}</option>`).join('')}</select></div></div>
-      <div><label>Tipo</label><div class="trow"><button class="${item.tipo==='fixo'?'on fixo':'fixo'}" onclick="setBT('${item.id}','fixo',this)">&#128260; Fixo</button><button class="${item.tipo==='extra'?'on extra':'extra'}" onclick="setBT('${item.id}','extra',this)">&#11088; Extra</button></div></div>
-    </div>`).join('');
+      ${bMode==='multi'?catSelect+mesesGrid:catSelect}
+      <div style="margin-top:10px"><label>Tipo</label><div class="trow"><button class="${item.tipo==='fixo'?'on fixo':'fixo'}" onclick="setBT('${item.id}','fixo',this)">&#128260; Fixo</button><button class="${item.tipo==='extra'?'on extra':'extra'}" onclick="setBT('${item.id}','extra',this)">&#11088; Extra</button></div></div>
+    </div>`;
+  }).join('');
 }
 function setBT(id,t,btn){const i=batchItems.find(x=>x.id===id);if(!i)return;i.tipo=t;const r=btn.closest('.brow');r.querySelectorAll('.trow button').forEach(b=>{b.className=b===btn?`on ${t}`:t==='fixo'?'extra':'fixo'})}
 function svBulk(){
-  const months=bMode==='multi'?[...bSelMonths]:[cm];
+  const months=bMode==='multi'?[...bSelMonths].sort():[cm];
   if(!months.length){alert('Selecione ao menos um m\u00eas.');return}
   let n=0;
   months.forEach(mon=>{
     if(!D[mon])D[mon]=[];
     batchItems.forEach(item=>{
       if(!item.nome.trim())return;
-      D[mon].push({id:uid(),nome:item.nome.trim(),valor:parseFloat(item.valor)||0,categoria:item.categoria||'Outros',tipo:item.tipo,recorrente:item.tipo==='fixo',status:'pendente',obs:'',createdAt:new Date().toISOString()});
+      const val=bMode==='multi'?(item.valMes[mon]!=null?item.valMes[mon]:parseFloat(item.valor)||0):parseFloat(item.valor)||0;
+      D[mon].push({id:uid(),nome:item.nome.trim(),valor:val,categoria:item.categoria||'Outros',tipo:item.tipo,recorrente:item.tipo==='fixo',status:'pendente',obs:'',createdAt:new Date().toISOString()});
       n++;
     });
   });

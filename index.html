@@ -744,11 +744,18 @@ function rFab(){
 
 // ====== RENDER DESPESAS ======
 function rDesp(){
-  // Inject cartao + dividas sections into desp pane
-  const djEl=document.getElementById('dj-inject');
   const dvDespEl=document.getElementById('dv-desp-inject');
-
   seedD();
+  // Render cartao orca + dividas in despesas pane
+  let dvDespH='';
+  if(cards.some(c=>CO[c.id]))dvDespH+='<div class="pi" style="padding-bottom:0">'+rCartaoOrca()+'</div>';
+  const dvAtivas=DV.filter(d=>d.meses?.[cm]?.ativa!==false);
+  if(dvAtivas.length){
+    dvDespH+='<div class="pi" style="padding-bottom:0"><div class="ch"><span class="cl" style="color:var(--pink)">&#128220; D\u00edvidas Ativas</span><span class="cln"></span><span class="cs">'+brl(dvAtivas.reduce((a,d)=>a+Number(d.meses?.[cm]?.valor||d.valorParcela||0),0))+'</span></div>';
+    dvAtivas.forEach(d=>{const s=d.meses?.[cm]?.status==='pago'?'pago':'pendente';dvDespH+='<div class="item '+s+'" style="margin-bottom:5px"><div class="sdot '+s+'" onclick="setTab(\'dv\')">'+(s==='pago'?'&#10003;':'')+'</div><div class="ib"><div class="ir1"><span class="iname">'+esc(d.nome)+'</span><span class="ival" style="color:var(--pink)">'+brl(d.meses?.[cm]?.valor||d.valorParcela||0)+'</span></div></div></div>';});
+    dvDespH+='</div>';
+  }
+  if(dvDespEl)dvDespEl.innerHTML=dvDespH;
   // Desejos deste mês
   const djMes=WL.filter(i=>i.mesPrevisto===cm&&i.status!=='comprado');
   const djEl=document.getElementById('dj-inject');
@@ -1678,4 +1685,4 @@ if(!selCard&&cards.length)selCard=cards[0].id;
 render();
 </script>
 </body>
-</html> 
+</html>

@@ -622,9 +622,16 @@ function rSumm(){
   const el=document.getElementById('summ');
   if(tab==='desp'){
     const items=(D[cm]||[]).filter(i=>i.tipo==='fixo');
-    const tot=items.reduce((a,i)=>a+Number(i.valor||0),0);
-    const pg=items.filter(i=>i.status==='pago').reduce((a,i)=>a+Number(i.valor||0),0);
-    el.innerHTML=`<div class="sc tot"><div class="lb">Previsto</div><div class="vl">${brl(tot)}</div></div><div class="sc pg"><div class="lb">Pago</div><div class="vl">${brl(pg)}</div></div><div class="sc pnd"><div class="lb">Pendente</div><div class="vl">${brl(tot-pg)}</div></div>`;
+    let tot=items.reduce((a,i)=>a+Number(i.valor||0),0);
+    let pg=items.filter(i=>i.status==='pago').reduce((a,i)=>a+Number(i.valor||0),0);
+    // Inclui desejos do mês quando visíveis
+    if(showDj){
+      const djMes=WL.filter(i=>i.mesPrevisto===cm&&i.status!=='comprado');
+      const djComp=WL.filter(i=>i.mesPrevisto===cm&&i.status==='comprado');
+      tot+=djMes.reduce((a,i)=>a+Number(i.preco||0),0)+djComp.reduce((a,i)=>a+Number(i.preco||0),0);
+      pg+=djComp.reduce((a,i)=>a+Number(i.preco||0),0);
+    }
+    el.innerHTML='<div class="sc tot"><div class="lb">Previsto</div><div class="vl">'+brl(tot)+'</div></div><div class="sc pg"><div class="lb">Pago</div><div class="vl">'+brl(pg)+'</div></div><div class="sc pnd"><div class="lb">Pendente</div><div class="vl">'+brl(tot-pg)+'</div></div>';
   } else if(tab==='cart'){
     if(selCard==='vr'){
       const sal=VR.saldos[cm]?.aReceber??VR.saldoPadrao??0;
@@ -994,7 +1001,7 @@ function adjHdr(){document.getElementById('content').style.paddingTop=document.g
 // ====== TAB ======
 function setTab(t){tab=t;filt='todos';selMode=false;selIds.clear();document.getElementById('sel-footer').style.display='none';document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));document.getElementById(`pane-${t}`).classList.add('on');document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('on'));document.getElementById(`tb-${t}`).classList.add('on');cFab();render()}
 function selC(id){selCard=id;filt='todos';rContent()}
-function togDjSection(){showDj=!showDj;const b=document.getElementById('dj-sec-body');if(b)b.style.display=showDj?'block':'none';rContent()}
+function togDjSection(){showDj=!showDj;const b=document.getElementById('dj-sec-body');if(b)b.style.display=showDj?'block':'none';rSumm();rContent()}
 
 // ====== FAB ======
 function togFab(){fabOpen=!fabOpen;document.getElementById('fabmenu').classList.toggle('on',fabOpen);document.getElementById('fabbt').classList.toggle('on',fabOpen)}

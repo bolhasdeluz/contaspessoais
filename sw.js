@@ -1,4 +1,4 @@
-const CACHE = 'abpp-v1';
+const CACHE = 'abpp-v4';
 const ASSETS = [
   '.',
   './index.html',
@@ -23,7 +23,20 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
-  );
+  // Network first for HTML, cache first for rest
+  if (e.request.url.endsWith('.html') || e.request.url.endsWith('/')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+  } else {
+    e.respondWith(
+      caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
+    );
+  }
 });

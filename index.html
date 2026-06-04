@@ -1456,6 +1456,32 @@ function fClose(id){
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')['ov-s','ov-b','ov-br','ov-dan','ov-ccfg','ov-ctx','ov-crec','ov-cran','ov-vr','ov-rd','ov-rdan','ov-dj','ov-del'].forEach(id=>{if(document.getElementById(id)?.classList.contains('on'))fClose(id)})});
 
+// ====== SWIPE TO CHANGE MONTH ======
+let _sx=0,_sy=0,_stgt=null;
+function _isHScroll(el){
+  while(el&&el!==document.body){
+    if(['frow','rcards','card-sel','mchips','filters','rcards','sbody'].some(c=>el.classList?.contains(c)))return true;
+    const ox=window.getComputedStyle(el).overflowX;
+    if((ox==='auto'||ox==='scroll')&&el.scrollWidth>el.clientWidth+4)return true;
+    el=el.parentElement;
+  }
+  return false;
+}
+document.addEventListener('touchstart',e=>{
+  if(e.touches.length!==1)return;
+  _sx=e.touches[0].clientX;_sy=e.touches[0].clientY;_stgt=e.target;
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(e.changedTouches.length!==1)return;
+  const dx=e.changedTouches[0].clientX-_sx;
+  const dy=e.changedTouches[0].clientY-_sy;
+  const adx=Math.abs(dx),ady=Math.abs(dy);
+  if(adx<55||adx<ady*1.4)return;        // muito curto ou mais vertical que horizontal
+  if(_isHScroll(_stgt))return;           // nasceu em scroll horizontal
+  if(document.querySelector('.ov.on'))return; // modal aberto
+  dx<0?chM(1):chM(-1);
+},{passive:true});
+
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 if(!selCard&&cards.length)selCard=cards[0].id;

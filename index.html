@@ -1069,20 +1069,27 @@ function djCard(i){
 // ====== DESPESA CARTÃO NO ORÇAMENTO ======
 function rCartaoOrca(){
   if(!cards.length)return'';
-  let h='<div style="margin:0 0 18px"><div class="ch" style="margin-bottom:8px"><span class="cl" style="color:var(--teal)">&#128179; Faturas no Or&#231;amento</span><span class="cln"></span><span class="cs">'+brl(cards.filter(c=>CO[c.id]).reduce((a,c)=>{const r=cardRec.filter(x=>x.cardId===c.id).reduce((s,r)=>s+Number(r.meses?.[cm]?.valor||0),0);const t=cardTxns.filter(x=>x.cardId===c.id&&x.mes===cm).reduce((s,t)=>s+Number(t.valor||0),0);return a+r+t},0))+'</span></div>';
+  const fatTotal=cards.filter(c=>CO[c.id]).reduce((a,c)=>{
+    const r=cardRec.filter(x=>x.cardId===c.id).reduce((s,x)=>s+Number(x.meses?.[cm]?.valor||0),0);
+    const t=cardTxns.filter(x=>x.cardId===c.id&&x.mes===cm).reduce((s,x)=>s+Number(x.valor||0),0);
+    return a+r+t;
+  },0);
+  let h=`<div style="margin:0 0 18px"><div class="ch" style="margin-bottom:8px"><span class="cl" style="color:var(--teal)">&#128179; Faturas no Or&#231;amento</span><span class="cln"></span><span class="cs">${brl(fatTotal)}</span></div>`;
   cards.forEach(c=>{
     const on=!!CO[c.id];
-    const recs=cardRec.filter(r=>r.cardId===c.id).reduce((a,r)=>a+Number(r.meses?.[cm]?.valor||0),0);
-    const txns=cardTxns.filter(t=>t.cardId===c.id&&t.mes===cm).reduce((a,t)=>a+Number(t.valor||0),0);
+    const recs=cardRec.filter(x=>x.cardId===c.id).reduce((a,x)=>a+Number(x.meses?.[cm]?.valor||0),0);
+    const txns=cardTxns.filter(x=>x.cardId===c.id&&x.mes===cm).reduce((a,x)=>a+Number(x.valor||0),0);
     const fat=recs+txns;
-    h+='<div style="display:flex;align-items:center;gap:10px;background:var(--sur);border:1px solid '+(on?'rgba(20,184,166,.35)':'var(--bd)')+ ';border-radius:var(--r);padding:10px 12px;margin-bottom:5px;cursor:pointer" onclick="togCO(''+c.id+'')">'
-      +'<div style="flex:1"><span style="font-size:13px;font-weight:500">'+esc(c.nome)+'</span><span style="font-family:var(--mono);font-size:12px;color:'+(on?'var(--teal)':'var(--mut)')+ ';margin-left:10px">'+brl(fat)+'</span></div>'
-      +'<div style="width:36px;height:20px;border-radius:10px;background:'+(on?'var(--teal)':'var(--bd2)')+ ';position:relative;transition:background .2s;flex-shrink:0"><div style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:'+(on?'18px':'2px')+';transition:left .2s"></div></div>'
-      +'</div>';
+    const border=on?'rgba(20,184,166,.35)':'var(--bd)';
+    const clr=on?'var(--teal)':'var(--mut)';
+    const bg=on?'var(--teal)':'var(--bd2)';
+    const thumb=on?'18px':'2px';
+    h+=`<div style="display:flex;align-items:center;gap:10px;background:var(--sur);border:1px solid ${border};border-radius:var(--r);padding:10px 12px;margin-bottom:5px;cursor:pointer" onclick="togCO('${c.id}')"><div style="flex:1"><span style="font-size:13px;font-weight:500">${esc(c.nome)}</span><span style="font-family:var(--mono);font-size:12px;color:${clr};margin-left:10px">${brl(fat)}</span></div><div style="width:36px;height:20px;border-radius:10px;background:${bg};position:relative;transition:background .2s;flex-shrink:0"><div style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:${thumb};transition:left .2s"></div></div></div>`;
   });
   return h+'</div>';
 }
 function togCO(cardId){CO[cardId]=!CO[cardId];saveAll();rContent();}
+
 
 // ====== RENDER DÍVIDAS ======
 function rDV(){
@@ -1097,23 +1104,32 @@ function rDV(){
     const ativa=mes.ativa!==false;
     const st=mes.status==='pago'?'pago':'pendente';
     const val=mes.valor||d.valorParcela||0;
-    // Progress
     const pgCount=Object.values(d.meses||{}).filter(m=>m.status==='pago').length;
     const tot=Number(d.totalParcelas||1);
     const pct=Math.round((pgCount/tot)*100);
-    h+='<div class="item '+(ativa?st:'')+ '" style="'+(ativa?'':'opacity:.5;border-left:3px solid var(--bd2)')+'">'
-      +'<div class="sdot '+(ativa?st:'')+ '" onclick="togDvSt(''+d.id+'')" style="'+(ativa?'':'cursor:default;background:none')+'">'+(ativa&&st==='pago'?'&#10003;':'')+'</div>'
-      +'<div class="ib"><div class="ir1"><span class="iname">'+esc(d.nome)+'</span><span class="ival" style="color:var(--pink)">'+brl(val)+'/mês</span></div>'
-      +'<div class="bdgs"><span class="bdg" style="background:rgba(236,72,153,.1);color:var(--pink);border:1px solid rgba(236,72,153,.2)">'+pgCount+'/'+tot+' parcelas</span>'+(d.credor?'<span class="bdg cc">'+esc(d.credor)+'</span>':'')+'</div>'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-top:4px"><div style="flex:1;height:3px;background:var(--bd2);border-radius:2px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:var(--pink);border-radius:2px"></div></div><span style="font-family:var(--mono);font-size:10px;color:var(--dim)">'+pct+'%</span></div></div>'
-      +'<div class="iacts">'
-      +'<button class="icb" onclick="togDvAtiva(''+d.id+'')" title="'+(ativa?'Desativar':'Ativar')+' este m&#234;s" style="color:'+(ativa?'var(--pink)':'var(--mut)')+'">&#9679;</button>'
-      +'<button class="icb" onclick="openDV(''+d.id+'')">&#9998;</button>'
-      +'<button class="icb del" onclick="askDel(''+d.id+'','dv')">&#10005;</button>'
-      +'</div></div>';
+    const itemCls=ativa?st:'';
+    const itemStyle=ativa?'':'opacity:.5;border-left:3px solid var(--bd2)';
+    const dotStyle=ativa?'':'cursor:default;background:none';
+    const ativaIcon=ativa?'var(--pink)':'var(--mut)';
+    const ativaTitle=ativa?'Desativar este mês':'Ativar este mês';
+    const credorBdg=d.credor?`<span class="bdg cc">${esc(d.credor)}</span>`:'';
+    h+=`<div class="item ${itemCls}" style="${itemStyle}">
+      <div class="sdot ${ativa?st:''}" onclick="togDvSt('${d.id}')" style="${dotStyle}">${ativa&&st==='pago'?'&#10003;':''}</div>
+      <div class="ib">
+        <div class="ir1"><span class="iname">${esc(d.nome)}</span><span class="ival" style="color:var(--pink)">${brl(val)}/mês</span></div>
+        <div class="bdgs"><span class="bdg" style="background:rgba(236,72,153,.1);color:var(--pink);border:1px solid rgba(236,72,153,.2)">${pgCount}/${tot} parcelas</span>${credorBdg}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px"><div style="flex:1;height:3px;background:var(--bd2);border-radius:2px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--pink);border-radius:2px"></div></div><span style="font-family:var(--mono);font-size:10px;color:var(--dim)">${pct}%</span></div>
+      </div>
+      <div class="iacts">
+        <button class="icb" onclick="togDvAtiva('${d.id}')" title="${ativaTitle}" style="color:${ativaIcon}">&#9679;</button>
+        <button class="icb" onclick="openDV('${d.id}')">&#9998;</button>
+        <button class="icb del" onclick="askDel('${d.id}','dv')">&#10005;</button>
+      </div>
+    </div>`;
   });
   el.innerHTML=h;
 }
+
 
 // ====== DÍVIDAS CRUD ======
 let eDvId=null;

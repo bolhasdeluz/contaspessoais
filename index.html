@@ -581,7 +581,10 @@ select option{background:#1c1c1c}
 
 <header class="hdr" id="hdr">
   <div class="hdr-top">
-    <span class="logo">ABPP</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="logo">ABPP</span>
+      <button class="mbtn" onclick="openCfg()" title="Configurações" style="font-size:14px">&#9881;</button>
+    </div>
     <div class="mnav">
       <button class="mbtn" onclick="chM(-1)">&#8249;</button>
       <span id="mlabel"></span>
@@ -665,6 +668,33 @@ select option{background:#1c1c1c}
   <div class="fg"><label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer"><input type="checkbox" id="s-inicio" style="width:14px;height:14px;accent-color:var(--amber);cursor:pointer"/> <span>Sai no in&#237;cio do m&#234;s</span></label></div>
   <div class="macts"><button class="btn bcn" onclick="fClose('ov-s')">Cancelar</button><button class="btn bsv" onclick="svSingle()">Salvar</button></div>
 </div></div>
+
+<!-- MODAL: CONFIGURAÇÕES -->
+<div class="ov" id="ov-cfg" onclick="closeOv('ov-cfg',event)">
+<div class="sheet" style="max-height:85vh;display:flex;flex-direction:column">
+  <div class="shdl"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px 8px">
+    <span style="font-size:15px;font-weight:600;color:var(--tx)">&#9881; Configura&#231;&#245;es</span>
+    <button class="mcl" onclick="fClose('ov-cfg')">&#10005;</button>
+  </div>
+
+  <!-- Categorias -->
+  <div style="padding:0 20px 8px;flex:1;overflow-y:auto">
+    <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+      Categorias<span style="flex:1;height:1px;background:var(--bd);display:block"></span>
+    </div>
+    <div id="cfg-cat-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px">
+      <input id="cfg-cat-input" type="text" placeholder="Nova categoria..." style="flex:1;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r);font-size:13px;color:var(--tx);padding:8px 12px;outline:none" onkeydown="if(event.key==='Enter')cfgAddCat()"/>
+      <button onclick="cfgAddCat()" style="background:var(--blue);color:#fff;border:none;border-radius:var(--r);padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">+ Add</button>
+    </div>
+  </div>
+
+  <div style="padding:12px 20px;border-top:1px solid var(--bd)">
+    <button class="btn bsv" onclick="cfgSave()" style="width:100%">Salvar</button>
+  </div>
+</div>
+</div>
 
 <!-- MODAL: CONTA ANUAL -->
 <div class="ov" id="ov-ca">
@@ -864,7 +894,8 @@ select option{background:#1c1c1c}
 
 <script>
 // ====== CONSTANTS ======
-const CATS={Moradia:'Moradia',Alimentacao:'Alimenta\u00e7\u00e3o',Transporte:'Transporte',Saude:'Sa\u00fade',Educacao:'Educa\u00e7\u00e3o',Lazer:'Lazer',Servicos:'Servi\u00e7os',Assinaturas:'Assinaturas',Outros:'Outros'};
+const CATS_DEFAULT={Moradia:'Moradia',Alimentação:'Alimentação',Transporte:'Transporte',Saúde:'Saúde',Educação:'Educação',Lazer:'Lazer',Serviços:'Serviços',Assinaturas:'Assinaturas',Outros:'Outros'};
+let CATS=JSON.parse(ls('abpp_cats')||'null')||{...CATS_DEFAULT};
 const MPT=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const MFL=['Janeiro','Fevereiro','Mar\u00e7o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
@@ -3088,6 +3119,44 @@ function mkMesItem(i){
     <span class="mes-item-nome ${st}" onclick="openCAFromItem('${id}')" style="cursor:pointer">${esc(i.nome)}</span>
     <span class="mes-item-val ${st}">${brl(i.valor)}</span>
   </div>`;
+}
+
+
+// ====== CONFIGURAÇÕES ======
+function openCfg(){
+  cfgRender();
+  openOv('ov-cfg');
+}
+function cfgRender(){
+  const list=document.getElementById('cfg-cat-list');
+  if(!list)return;
+  list.innerHTML=Object.keys(CATS).map(k=>`
+    <div style="display:flex;align-items:center;gap:8px;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r);padding:7px 12px">
+      <span style="flex:1;font-size:13px;color:var(--tx)">${esc(CATS[k])}</span>
+      ${k==='Outros'?'<span style="font-size:10px;color:var(--mut)">padrão</span>':
+        `<button onclick="cfgDelCat('${k}')" style="background:none;border:none;color:var(--mut);cursor:pointer;font-size:13px;padding:0 4px" title="Remover">&#10005;</button>`}
+    </div>`).join('');
+}
+function cfgAddCat(){
+  const inp=document.getElementById('cfg-cat-input');
+  const nome=(inp?.value||'').trim();
+  if(!nome)return;
+  const key=nome.replace(/\s+/g,'_');
+  if(CATS[key]){inp.value='';return;}
+  CATS[key]=nome;
+  inp.value='';
+  cfgRender();
+}
+function cfgDelCat(k){
+  if(k==='Outros')return;
+  delete CATS[k];
+  cfgRender();
+}
+function cfgSave(){
+  setls('abpp_cats',JSON.stringify(CATS));
+  fClose('ov-cfg');
+  // Recarregar selects abertos
+  fillCat('s-ct');fillCat('ctx-ct');fillCat('ca-edit-cat');
 }
 
 // ====== SWIPE TO CHANGE MONTH ======

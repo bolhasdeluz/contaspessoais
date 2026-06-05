@@ -383,6 +383,21 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
 .cel-edit.new{color:var(--bd2);border-color:transparent;background:transparent}
 .cel-edit.new:hover{color:var(--mut);border-color:var(--bd2);background:var(--sur2)}
 
+
+/* Modal Conta Anual */
+.ca-row{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--bd)}
+.ca-row:last-child{border-bottom:none}
+.ca-mes{font-size:12px;font-weight:600;color:var(--dim);min-width:36px}
+.ca-row.cur .ca-mes{color:var(--blue)}
+.ca-row.cur{background:rgba(59,130,246,.05)}
+.ca-val{flex:1}
+.ca-val input{width:100%;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--mono);font-size:13px;font-weight:500;color:var(--tx);padding:6px 10px;outline:none}
+.ca-val input:focus{border-color:var(--blue);background:rgba(59,130,246,.07)}
+.ca-st{min-width:80px}
+.ca-st select{width:100%;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r);font-size:11px;color:var(--dim);padding:6px 6px;outline:none}
+.ca-row.pago .ca-mes{color:var(--green)}
+.ca-row.pago .ca-val input{color:var(--green)}
+
 /* TABBAR */
 .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(4,1fr);height:56px}
 .tabbtn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-family:var(--sans);font-size:10px;font-weight:500;transition:color .15s;padding:0}
@@ -569,6 +584,21 @@ select option{background:#1c1c1c}
   <div class="fg"><label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer"><input type="checkbox" id="s-inicio" style="width:14px;height:14px;accent-color:var(--amber);cursor:pointer"/> <span>Sai no in&#237;cio do m&#234;s</span></label></div>
   <div class="macts"><button class="btn bcn" onclick="fClose('ov-s')">Cancelar</button><button class="btn bsv" onclick="svSingle()">Salvar</button></div>
 </div></div>
+
+<!-- MODAL: CONTA ANUAL -->
+<div class="ov" id="ov-ca">
+<div class="modal" style="max-height:90vh;display:flex;flex-direction:column">
+  <div class="mh"><span id="ca-tit">Conta</span><button class="mcl" onclick="fClose('ov-ca')">&#10005;</button></div>
+  <div style="padding:0 16px 8px;border-bottom:1px solid var(--bd)">
+    <div style="font-size:11px;color:var(--mut)" id="ca-sub"></div>
+  </div>
+  <div id="ca-list" style="overflow-y:auto;flex:1;padding:8px 0"></div>
+  <div class="macts" style="padding:12px 16px;border-top:1px solid var(--bd)">
+    <button class="btn bcn" onclick="fClose('ov-ca')">Fechar</button>
+    <button class="btn bsv" onclick="caSaveAll()">Salvar tudo</button>
+  </div>
+</div>
+</div>
 
 <!-- MODAL: BULK -->
 <div class="ov" id="ov-b" onclick="closeOv('ov-b',event)"><div class="sheet" style="max-height:94dvh">
@@ -2197,8 +2227,8 @@ function rAnual(){
   // Gerar thead
   let thead='<thead><tr>';
   thead+='<th class="th-mes">Mês</th>';
-  if(despCols.length){despCols.forEach(n=>{thead+=`<th title="${esc(n)}">${esc(n.length>10?n.slice(0,9)+'…':n)}</th>`;colTots['d_'+n]=0})}
-  if(extCols.length){extCols.forEach(n=>{thead+=`<th title="${esc(n)}" style="color:var(--purple)">${esc(n.length>10?n.slice(0,9)+'…':n)}</th>`;colTots['e_'+n]=0})}
+  if(despCols.length){despCols.forEach(n=>{thead+=`<th title="${esc(n)}" style="cursor:pointer" onclick="openCA('${esc(n)}','fixo',${cy})">${esc(n.length>10?n.slice(0,9)+'…':n)}</th>`;colTots['d_'+n]=0})}
+  if(extCols.length){extCols.forEach(n=>{thead+=`<th title="${esc(n)}" style="color:var(--purple);cursor:pointer" onclick="openCA('${esc(n)}','extra',${cy})">${esc(n.length>10?n.slice(0,9)+'…':n)}</th>`;colTots['e_'+n]=0})}
   if(cartCols.length){cartCols.forEach(r=>{thead+=`<th title="${esc(r.nome)} (${esc(r.cardNome)})" style="color:var(--teal)">${esc(r.nome.length>10?r.nome.slice(0,9)+'…':r.nome)}</th>`;colTots['cr_'+r.id]=0})}
   if(rendaCols.length){rendaCols.forEach(r=>{thead+=`<th title="${esc(r.nome)}" style="color:var(--gold)">${esc(r.nome.length>10?r.nome.slice(0,9)+'…':r.nome)}</th>`;colTots['rd_'+r.id]=0})}
   if(djCols.length){djCols.forEach(w=>{thead+=`<th title="${esc(w.nome)}" style="color:var(--purple)">${esc(w.nome.length>10?w.nome.slice(0,9)+'…':w.nome)}</th>`;colTots['dj_'+w.id]=0})}
@@ -2389,20 +2419,16 @@ function anSaveDj(djId,mes,val,input){
 
 // ====== EDIÇÃO INLINE ANUAL ======
 function anEditDesp(id, mes){
-  // Navegar para o mês se necessário, depois abrir popup
-  if(mes!==cm){_anSetMes(mes);}
-  setTimeout(()=>openS(id), mes!==cm?200:0);
+  // Encontrar o nome e tipo do item para abrir o modal anual
+  const ano=parseInt(mes.split('-')[0]);
+  let found=null;
+  Object.values(D).forEach(arr=>arr.forEach(i=>{if(i.id===id)found=i;}));
+  if(found)openCA(found.nome.trim(), found.recorrente?'fixo':'extra', ano);
+  else{if(mes!==cm)_anSetMes(mes);setTimeout(()=>openS(id),200);}
 }
 function anNewDesp(mes, nome, tipo){
-  if(mes!==cm){_anSetMes(mes);}
-  setTimeout(()=>{
-    openS();
-    setTimeout(()=>{
-      const el=document.getElementById('s-nm');
-      if(el)el.value=nome;
-      if(tipo==='extra')sTipo('extra'); else sTipo('fixo');
-    },100);
-  }, mes!==cm?200:0);
+  const ano=parseInt(mes.split('-')[0]);
+  openCA(nome, tipo, ano);
 }
 function anEditCardRec(recId, mes){
   // Abrir modal de cartão recorrente — navegar pro cartão
@@ -2449,6 +2475,71 @@ function _anSetMes(mes){
   curY2=y; curM2=m;
   updHeader();
   setTab('desp');
+}
+
+
+// ====== MODAL CONTA ANUAL ======
+let caState={}; // {nomeKey, tipo, ano, meses: {mm: {id,valor,status}}}
+
+function openCA(nomeKey, tipo, ano){
+  caState={nomeKey, tipo, ano, meses:{}};
+  document.getElementById('ca-tit').textContent=nomeKey;
+  const tipoLabel=tipo==='fixo'?'Conta fixa recorrente':'Despesa extra';
+  document.getElementById('ca-sub').textContent=tipoLabel+' · '+ano;
+
+  let html='';
+  for(let m=1;m<=12;m++){
+    const k=ym(ano,m);
+    const entry=(D[k]||[]).find(i=>i.nome.trim().toLowerCase()===nomeKey.toLowerCase()&&(tipo==='fixo'?i.recorrente:!i.recorrente));
+    const val=entry?.valor||'';
+    const st=entry?.status||'pendente';
+    const isCur=k===cm;
+    const isPago=st==='pago';
+    caState.meses[k]={id:entry?.id||null, valor:val, status:st};
+    html+=`<div class="ca-row${isCur?' cur':''}${isPago?' pago':''}" id="ca-row-${k}">
+      <div class="ca-mes">${MPT[m-1]}</div>
+      <div class="ca-val"><input type="number" step="0.01" min="0" value="${val}" placeholder="—" id="ca-val-${k}" oninput="caRowUpd('${k}',this.value)"/></div>
+      <div class="ca-st"><select id="ca-st-${k}" onchange="caRowStUpd('${k}',this.value)">
+        <option value="pendente"${st==='pendente'?' selected':''}>⏳ Pendente</option>
+        <option value="pago"${st==='pago'?' selected':''}>✓ Pago</option>
+      </select></div>
+    </div>`;
+  }
+  document.getElementById('ca-list').innerHTML=html;
+  openOv('ov-ca');
+  // scroll para o mês atual
+  setTimeout(()=>{
+    const cur=document.getElementById('ca-row-'+cm);
+    if(cur)cur.scrollIntoView({block:'center',behavior:'smooth'});
+  },200);
+}
+
+function caRowUpd(k, val){
+  if(!caState.meses[k])caState.meses[k]={id:null,valor:'',status:'pendente'};
+  caState.meses[k].valor=val;
+}
+function caRowStUpd(k, st){
+  if(!caState.meses[k])caState.meses[k]={id:null,valor:'',status:'pendente'};
+  caState.meses[k].status=st;
+  const row=document.getElementById('ca-row-'+k);
+  if(row){row.classList.toggle('pago',st==='pago');row.classList.toggle('cur',k===cm&&st!=='pago');}
+}
+
+function caSaveAll(){
+  const{nomeKey,tipo,ano,meses}=caState;
+  Object.entries(meses).forEach(([k,data])=>{
+    const v=parseFloat(data.valor)||0;
+    if(!D[k])D[k]=[];
+    if(data.id){
+      const entry=D[k].find(i=>i.id===data.id);
+      if(entry){entry.valor=v;entry.status=data.status;}
+    } else if(v>0){
+      D[k].push({id:uid(),nome:nomeKey,valor:v,categoria:'Outros',tipo,recorrente:tipo==='fixo',status:data.status,obs:'',createdAt:new Date().toISOString()});
+    }
+  });
+  saveAll();
+  fClose('ov-ca');
+  rAnual();
 }
 
 // ====== SWIPE TO CHANGE MONTH ======

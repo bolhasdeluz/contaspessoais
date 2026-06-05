@@ -2325,7 +2325,13 @@ function rAnual(){
   // Gerar thead
   let thead='<thead><tr>';
   thead+='<th class="th-mes">Mês</th>';
-  if(despCols.length){despCols.forEach(n=>{thead+=`<th title="${esc(n)}" style="cursor:pointer" onclick="openCA('${esc(n)}','fixo',${cy})">${esc(n.length>10?n.slice(0,9)+'…':n)}</th>`;colTots['d_'+n]=0})}
+  if(despCols.length){despCols.forEach(n=>{
+    const isInicio=Object.values(D).some(arr=>arr.some(i=>i.nome.trim()===n&&i.inicioMes));
+    const cor=isInicio?'var(--amber)':'inherit';
+    const prefix=isInicio?'⚡ ':'';
+    thead+=`<th title="${esc(n)}" style="cursor:pointer;color:${cor}" onclick="openCA('${esc(n)}','fixo',${cy})">${prefix}${esc(n.length>10?n.slice(0,9)+'…':n)}</th>`;
+    colTots['d_'+n]=0;
+  })}
   if(extCols.length){extCols.forEach(n=>{thead+=`<th title="${esc(n)}" style="color:var(--purple);cursor:pointer" onclick="openCA('${esc(n)}','extra',${cy})">${esc(n.length>10?n.slice(0,9)+'…':n)}</th>`;colTots['e_'+n]=0})}
   if(cartCols.length){cartCols.forEach(r=>{thead+=`<th title="${esc(r.nome)} (${esc(r.cardNome)})" style="color:var(--teal)">${esc(r.nome.length>10?r.nome.slice(0,9)+'…':r.nome)}</th>`;colTots['cr_'+r.id]=0})}
   if(rendaCols.length){rendaCols.forEach(r=>{thead+=`<th title="${esc(r.nome)}" style="color:var(--gold)">${esc(r.nome.length>10?r.nome.slice(0,9)+'…':r.nome)}</th>`;colTots['rd_'+r.id]=0})}

@@ -1121,6 +1121,7 @@ function rFab(){
     el.innerHTML=`
       <div class="fabi"><span class="fabl">Renda</span><button class="fabm" style="background:rgba(234,179,8,.15);border:1px solid rgba(234,179,8,.3);color:var(--gold)" onclick="cFab();openRd()">&#128176;</button></div>
       <div class="fabi"><span class="fabl">Conta r&#225;pida</span><button class="fabm" style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.25);color:var(--purple)" onclick="cFab();openS()">&#9997;</button></div>
+      <div class="fabi"><span class="fabl">Cart&#227;o</span><button class="fabm" style="background:rgba(20,184,166,.1);border:1px solid rgba(20,184,166,.25);color:var(--teal)" onclick="cFab();openCtxFromDesp()">&#128179;</button></div>
       <div class="fabi"><span class="fabl">Nova conta fixa</span><button class="fabm" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);color:var(--blue)" onclick="cFab();openCANew()">&#128260;</button></div>`;
   } else if(tab==='an'){
     el.innerHTML=`<div class="fabi"><span class="fabl">Atualizar</span><button class="fabm" onclick="cFab();rAnual()">&#8635;</button></div>`;
@@ -1680,7 +1681,7 @@ function setTab(t){
   document.getElementById('tb-'+t)?.classList.add('on');
   if(t==='cart'&&!selCard&&cards.length)selCard=cards[0].id;
   if(t==='an')anYear=new Date().getFullYear();
-  cFab();rContent();
+  cFab();rFab();rContent();
 }
 function selC(id){selCard=id;filt='todos';rContent()}
 function togDjSection(){showDj=!showDj;const b=document.getElementById('dj-sec-body');if(b)b.style.display=showDj?'block':'none';rSumm();rContent()}
@@ -1971,7 +1972,8 @@ function svCardCfg(){
 // ====== CARTÃO NO ORÇAMENTO A PARTIR DE DESPESAS ======
 let ctxFromDesp=false;
 function openCtxFromDesp(){
-  if(!cards.length){alert('Adicione um cartão primeiro.');return}
+  if(!cards.length){alert('Adicione um cartão primeiro na aba Cartões.');return}
+  if(!selCard&&cards.length)selCard=cards[0].id;
   ctxFromDesp=true;
   // Mostrar seletor de cartão no modal
   const tit=document.getElementById('ctx-tit');

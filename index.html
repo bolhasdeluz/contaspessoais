@@ -398,6 +398,38 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
 .ca-row.pago .ca-mes{color:var(--green)}
 .ca-row.pago .ca-val input{color:var(--green)}
 
+
+/* Remover spinners input number */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+
+/* Toggle status no modal anual */
+.ca-st-tog{
+  min-width:88px;padding:5px 10px;border-radius:var(--r);
+  font-size:11px;font-weight:600;cursor:pointer;
+  border:1px solid var(--bd2);background:var(--sur2);
+  color:var(--mut);transition:all .15s;text-align:center;user-select:none;
+}
+.ca-st-tog.pago{background:rgba(34,197,94,.12);color:var(--green);border-color:rgba(34,197,94,.3)}
+.ca-st-tog.pendente{background:var(--sur2);color:var(--mut);border-color:var(--bd2)}
+
+
+/* PIX + Código de barras */
+.ca-pix-row{display:flex;align-items:center;gap:8px;padding:10px 16px 6px}
+.ca-pix-input{flex:1;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r);font-size:12px;color:var(--tx);padding:6px 10px;outline:none}
+.ca-pix-input:focus{border-color:var(--teal)}
+.ca-pix-btn{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:6px 10px;border-radius:var(--r);border:1px solid rgba(20,184,166,.3);background:rgba(20,184,166,.1);color:var(--teal);cursor:pointer;white-space:nowrap;transition:all .12s}
+.ca-pix-btn:hover{background:rgba(20,184,166,.2)}
+.ca-pix-btn.copied{background:rgba(34,197,94,.15);color:var(--green);border-color:rgba(34,197,94,.3)}
+.ca-cod-wrap{flex:1;display:flex;align-items:center;gap:4px}
+.ca-cod-input{flex:1;background:transparent;border:none;border-bottom:1px solid var(--bd2);font-size:10px;font-family:var(--mono);color:var(--dim);padding:2px 4px;outline:none;min-width:0}
+.ca-cod-input:focus{border-color:var(--blue)}
+.ca-cod-btn{flex-shrink:0;font-size:10px;padding:2px 6px;border-radius:3px;border:1px solid var(--bd2);background:var(--sur2);color:var(--mut);cursor:pointer;transition:all .12s}
+.ca-cod-btn:hover{color:var(--tx);border-color:#555}
+.ca-cod-btn.copied{color:var(--green);border-color:rgba(34,197,94,.3)}
+.ca-pix-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);min-width:28px}
+
 /* TABBAR */
 .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(4,1fr);height:56px}
 .tabbtn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-family:var(--sans);font-size:10px;font-weight:500;transition:color .15s;padding:0}
@@ -591,6 +623,11 @@ select option{background:#1c1c1c}
   <div class="mh"><span id="ca-tit">Conta</span><button class="mcl" onclick="fClose('ov-ca')">&#10005;</button></div>
   <div style="padding:0 16px 8px;border-bottom:1px solid var(--bd)">
     <div style="font-size:11px;color:var(--mut)" id="ca-sub"></div>
+    <div class="ca-pix-row" id="ca-pix-row">
+      <span class="ca-pix-lbl">PIX</span>
+      <input class="ca-pix-input" id="ca-pix-input" placeholder="Chave PIX (email, CPF, telefone...)" oninput="caState.pix=this.value"/>
+      <button class="ca-pix-btn" id="ca-pix-btn" onclick="caCopyPix()">&#128203; Copiar PIX</button>
+    </div>
   </div>
   <div id="ca-list" style="overflow-y:auto;flex:1;padding:8px 0"></div>
   <div class="macts" style="padding:12px 16px;border-top:1px solid var(--bd)">
@@ -1016,7 +1053,10 @@ function mkDespItem(i,isInicio){
   } else {
     const yb=i.recorrente?`<button class="icb" onclick="event.stopPropagation();openDan('${id}')">&#128197;</button>`:'';
     dot=`<div class="sdot ${st}" onclick="event.stopPropagation();togD('${id}')">${st==='pago'?'&#10003;':''}</div>`;
-    acts=`<button class="icb" onclick="event.stopPropagation();openS('${id}')">&#9998;</button>${yb}<button class="icb del" onclick="event.stopPropagation();askDel('${id}','d')">&#10005;</button>`;
+    const editAct=i.recorrente
+      ?`<button class="icb" onclick="event.stopPropagation();openCAFromItem('${id}')">&#9998;</button>`
+      :`<button class="icb" onclick="event.stopPropagation();openS('${id}')">&#9998;</button>`;
+    acts=editAct+yb+`<button class="icb del" onclick="event.stopPropagation();askDel('${id}','d')">&#10005;</button>`;
   }
   const obsHtml=i.obs?`<div class="iobs">${esc(i.obs)}</div>`:'';
   const recBdg=i.recorrente?'<span class="bdg rec">Recorrente</span>':'';
@@ -2482,7 +2522,10 @@ function _anSetMes(mes){
 let caState={}; // {nomeKey, tipo, ano, meses: {mm: {id,valor,status}}}
 
 function openCA(nomeKey, tipo, ano){
-  caState={nomeKey, tipo, ano, meses:{}};
+  // Carregar PIX salvo para esta conta
+  const caKey='abpp_ca_'+nomeKey.toLowerCase().replace(/\s+/g,'_');
+  const caMeta=JSON.parse(ls(caKey)||'{}');
+  caState={nomeKey, tipo, ano, meses:{}, pix:caMeta.pix||'', caKey};
   document.getElementById('ca-tit').textContent=nomeKey;
   const tipoLabel=tipo==='fixo'?'Conta fixa recorrente':'Despesa extra';
   document.getElementById('ca-sub').textContent=tipoLabel+' · '+ano;
@@ -2496,16 +2539,21 @@ function openCA(nomeKey, tipo, ano){
     const isCur=k===cm;
     const isPago=st==='pago';
     caState.meses[k]={id:entry?.id||null, valor:val, status:st};
+    const cod=caMeta[k]?.cod||'';
     html+=`<div class="ca-row${isCur?' cur':''}${isPago?' pago':''}" id="ca-row-${k}">
       <div class="ca-mes">${MPT[m-1]}</div>
       <div class="ca-val"><input type="number" step="0.01" min="0" value="${val}" placeholder="—" id="ca-val-${k}" oninput="caRowUpd('${k}',this.value)"/></div>
-      <div class="ca-st"><select id="ca-st-${k}" onchange="caRowStUpd('${k}',this.value)">
-        <option value="pendente"${st==='pendente'?' selected':''}>⏳ Pendente</option>
-        <option value="pago"${st==='pago'?' selected':''}>✓ Pago</option>
-      </select></div>
+      <div class="ca-st"><button class="ca-st-tog ${st}" id="ca-st-${k}" onclick="caRowStToggle('${k}')">${st==='pago'?'✓ Pago':'⏳ Pendente'}</button></div>
+      <div class="ca-cod-wrap">
+        <input class="ca-cod-input" id="ca-cod-${k}" value="${cod}" placeholder="Cód. barras" oninput="caRowCodUpd('${k}',this.value)"/>
+        <button class="ca-cod-btn" id="ca-cod-btn-${k}" onclick="caCopyCod('${k}')" title="Copiar código de barras">&#128203;</button>
+      </div>
     </div>`;
   }
   document.getElementById('ca-list').innerHTML=html;
+  // Preencher PIX
+  const pixInput=document.getElementById('ca-pix-input');
+  if(pixInput)pixInput.value=caState.pix||'';
   openOv('ov-ca');
   // scroll para o mês atual
   setTimeout(()=>{
@@ -2518,11 +2566,19 @@ function caRowUpd(k, val){
   if(!caState.meses[k])caState.meses[k]={id:null,valor:'',status:'pendente'};
   caState.meses[k].valor=val;
 }
-function caRowStUpd(k, st){
+function caRowCodUpd(k, cod){
   if(!caState.meses[k])caState.meses[k]={id:null,valor:'',status:'pendente'};
-  caState.meses[k].status=st;
+  caState.meses[k].cod=cod;
+}
+function caRowStToggle(k){
+  if(!caState.meses[k])caState.meses[k]={id:null,valor:'',status:'pendente'};
+  const cur=caState.meses[k].status;
+  const next=cur==='pago'?'pendente':'pago';
+  caState.meses[k].status=next;
+  const btn=document.getElementById('ca-st-'+k);
+  if(btn){btn.className='ca-st-tog '+next;btn.textContent=next==='pago'?'✓ Pago':'⏳ Pendente';}
   const row=document.getElementById('ca-row-'+k);
-  if(row){row.classList.toggle('pago',st==='pago');row.classList.toggle('cur',k===cm&&st!=='pago');}
+  if(row){row.classList.toggle('pago',next==='pago');}
 }
 
 function caSaveAll(){
@@ -2537,9 +2593,49 @@ function caSaveAll(){
       D[k].push({id:uid(),nome:nomeKey,valor:v,categoria:'Outros',tipo,recorrente:tipo==='fixo',status:data.status,obs:'',createdAt:new Date().toISOString()});
     }
   });
+  // Salvar PIX e códigos de barras na meta da conta
+  const meta={pix:caState.pix||''};
+  Object.entries(caState.meses).forEach(([k,data])=>{
+    if(data.cod)meta[k]={cod:data.cod};
+  });
+  setls(caState.caKey, JSON.stringify(meta));
   saveAll();
   fClose('ov-ca');
   rAnual();
+}
+
+// Abre modal anual a partir de um id de item
+function openCAFromItem(id){
+  let found=null;
+  const ano=parseInt(cm.split('-')[0]);
+  Object.values(D).forEach(arr=>arr.forEach(i=>{if(i.id===id)found=i;}));
+  if(found)openCA(found.nome.trim(), found.recorrente?'fixo':'extra', ano);
+  else openS(id);
+}
+
+// ====== PIX + CÓDIGO DE BARRAS ======
+function caCopyPix(){
+  const pix=caState.pix?.trim();
+  if(!pix){alert('Cadastre uma chave PIX primeiro.');return;}
+  // valor do mês atual ou primeiro mês com valor
+  let val=0;
+  const mesVal=caState.meses[cm]?.valor||0;
+  if(mesVal)val=mesVal;
+  else{const first=Object.values(caState.meses).find(m=>m.valor>0);if(first)val=first.valor;}
+  const txt=val?`${pix} · R$ ${Number(val).toLocaleString('pt-BR',{minimumFractionDigits:2})}`:`${pix}`;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn=document.getElementById('ca-pix-btn');
+    if(btn){btn.classList.add('copied');btn.textContent='✓ Copiado!';setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='&#128203; Copiar PIX';},2000);}
+  }).catch(()=>alert(txt));
+}
+function caCopyCod(k){
+  const inp=document.getElementById('ca-cod-'+k);
+  const cod=inp?.value?.trim().replace(/\s+/g,'');
+  if(!cod){return;}
+  navigator.clipboard.writeText(cod).then(()=>{
+    const btn=document.getElementById('ca-cod-btn-'+k);
+    if(btn){btn.classList.add('copied');btn.textContent='✓';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='&#128203;';btn.innerHTML='&#128203;';},2000);}
+  }).catch(()=>alert(cod));
 }
 
 // ====== SWIPE TO CHANGE MONTH ======

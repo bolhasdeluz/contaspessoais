@@ -944,22 +944,23 @@ function rFab(){
 function mkDespItem(i,isInicio){
   const st=i.status==='pago'?'pago':'pendente';
   const isSel=selIds.has(i.id);
+  const id=i.id;
   let dot,acts;
   if(selMode){
-    dot='<div class="sel-dot '+(isSel?'on':'')+'" onclick="event.stopPropagation();togSel(\'' +i.id+ '\')">'+(isSel?'&#10003;':'')+'</div>';
+    dot=`<div class="sel-dot ${isSel?'on':''}" onclick="event.stopPropagation();togSel('${id}')">${isSel?'&#10003;':''}</div>`;
     acts='';
   } else {
-    dot='<div class="sdot '+st+'" onclick="event.stopPropagation();togD(\'' +i.id+ '\')">'+(st==='pago'?'&#10003;':'')+'</div>';
-    const yb=i.recorrente?'<button class="icb" onclick="event.stopPropagation();openDan(\'' +i.id+ '\')">&#128197;</button>':'';
-    acts='<button class="icb" onclick="event.stopPropagation();openS(\'' +i.id+ '\')">&#9998;</button>'+yb+'<button class="icb del" onclick="event.stopPropagation();askDel(\'' +i.id+ '\',\'d\')">&#10005;</button>';
+    const yb=i.recorrente?`<button class="icb" onclick="event.stopPropagation();openDan('${id}')">&#128197;</button>`:'';
+    dot=`<div class="sdot ${st}" onclick="event.stopPropagation();togD('${id}')">${st==='pago'?'&#10003;':''}</div>`;
+    acts=`<button class="icb" onclick="event.stopPropagation();openS('${id}')">&#9998;</button>${yb}<button class="icb del" onclick="event.stopPropagation();askDel('${id}','d')">&#10005;</button>`;
   }
-  const obsHtml=i.obs?'<div class="iobs">'+esc(i.obs)+'</div>':'';
+  const obsHtml=i.obs?`<div class="iobs">${esc(i.obs)}</div>`:'';
   const recBdg=i.recorrente?'<span class="bdg rec">Recorrente</span>':'';
   const extBdg=i.tipo==='extra'?'<span class="bdg ext">Extra</span>':'';
-  const inicioBdg=isInicio?'<span class="bdg" style="background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.2)">In\u00edcio</span>':'';
-  const itemOnclick=selMode?' onclick="togSel(\'' +i.id+ '\')"':' onclick="openS(\'' +i.id+ '\')" style="cursor:pointer"';
-  const attachHtml=i.anexo?'<div style="margin-top:4px"><span class="attach-chip" onclick="event.stopPropagation();viewAttach(\'' +i.id+ '\')">&#128206; '+esc(i.anexo.name)+'</span></div>':'';
-  return '<div class="item '+st+(isSel?' sel-on':'')+(isInicio?' inicio-mes':'')+'"'+itemOnclick+'>'+dot+'<div class="ib"><div class="ir1"><span class="iname '+st+'">'+esc(i.nome)+'</span><span class="ival">'+brl(i.valor)+'</span></div><div class="bdgs">'+recBdg+extBdg+inicioBdg+'</div>'+obsHtml+attachHtml+'</div><div class="iacts">'+acts+'</div></div>';
+  const inicioBdg=isInicio?'<span class="bdg" style="background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.2)">Início</span>':'';
+  const attachHtml=i.anexo?`<div style="margin-top:4px"><span class="attach-chip" onclick="event.stopPropagation();viewAttach('${id}')">&#128206; ${esc(i.anexo.name)}</span></div>`:'';
+  const itemClick=selMode?`onclick="togSel('${id}')"`:` onclick="openS('${id}')" style="cursor:pointer"`;
+  return `<div class="item ${st}${isSel?' sel-on':''}${isInicio?' inicio-mes':''}" ${itemClick}>${dot}<div class="ib"><div class="ir1"><span class="iname ${st}">${esc(i.nome)}</span><span class="ival">${brl(i.valor)}</span></div><div class="bdgs">${recBdg}${extBdg}${inicioBdg}</div>${obsHtml}${attachHtml}</div><div class="iacts">${acts}</div></div>`;
 }
 
 // ====== RENDER DESPESAS ======
@@ -2089,6 +2090,19 @@ function togAF(k){
 
 function chAnYear(d){anYear+=d;rAnual()}
 
+function anOpenMes(mes){
+  // Muda a aba pra Despesas e navega para o mês clicado
+  const[y,m]=mes.split('-').map(Number);
+  // Se for mês diferente, navegar
+  if(mes!==cm){
+    // ajustar cm para o mês clicado
+    curY2=y;curM2=m;
+    cm=mes;
+    updHeader();
+  }
+  setTab('desp');
+}
+
 function rAnual(){
   document.getElementById('an-year-lbl').textContent=anYear;
   const body=document.getElementById('anual-body');
@@ -2144,6 +2158,7 @@ function rAnual(){
   if(rendaCols.length){rendaCols.forEach(r=>{thead+=`<th title="${esc(r.nome)}" style="color:var(--gold)">${esc(r.nome.length>10?r.nome.slice(0,9)+'…':r.nome)}</th>`;colTots['rd_'+r.id]=0})}
   if(djCols.length){djCols.forEach(w=>{thead+=`<th title="${esc(w.nome)}" style="color:var(--purple)">${esc(w.nome.length>10?w.nome.slice(0,9)+'…':w.nome)}</th>`;colTots['dj_'+w.id]=0})}
   if(ctxCols.length){ctxCols.forEach(n=>{thead+=`<th title="${esc(n)}" style="color:var(--blue)">${esc(n.length>10?n.slice(0,9)+'…':n)}</th>`;colTots['ctx_'+n]=0})}
+  thead+='<th class="th-tot" style="min-width:36px"></th>';
   thead+='<th class="th-tot">Total</th>';
   thead+='</tr></thead>';
 
@@ -2243,13 +2258,14 @@ function rAnual(){
     tbody+=`<tr${isCur?' class="cur-mes"':''}>`;
     tbody+=`<td class="td-mes">${MPT[mi-1]}</td>`;
     tbody+=cells;
+    tbody+=`<td class="td-tot" style="text-align:center;padding:0 4px"><button onclick="anOpenMes('${k}')" style="background:none;border:1px solid var(--bd2);border-radius:4px;color:var(--mut);font-size:11px;padding:2px 6px;cursor:pointer" title="Ver lançamentos de ${MPT[mi-1]}">&#9998;</button></td>`;
     tbody+=`<td class="td-tot">${rowTotal>0?vn(rowTotal):''}</td>`;
     tbody+='</tr>';
   }
   tbody+='</tbody>';
 
   // tfoot — totais por coluna
-  let tfoot='<tfoot><tr><td class="td-mes">Total</td>';
+  let tfoot='<tfoot><tr><td class="td-mes">Total</td><td class="td-tot"></td>';
   despCols.forEach(n=>{const t=colTots['d_'+n];tfoot+=`<td class="td-tot" style="color:var(--amber)">${t>0?vn(t):''}</td>`});
   extCols.forEach(n=>{const t=colTots['e_'+n];tfoot+=`<td class="td-tot" style="color:var(--purple)">${t>0?vn(t):''}</td>`});
   cartCols.forEach(r=>{const t=colTots['cr_'+r.id];tfoot+=`<td class="td-tot" style="color:var(--teal)">${t>0?vn(t):''}</td>`});

@@ -1087,7 +1087,10 @@ function rFab(){
       el.innerHTML=`<div class="fabi"><span class="fabl">Adicionar cart\u00e3o</span><button class="fabm" onclick="cFab();openCCfg()">+</button></div>`;
     }
   } else if(tab==='saldo'||tab==='mes'){
-    el.innerHTML=`<div class="fabi"><span class="fabl">Lançar</span><button class="fabm" onclick="cFab();setTab('desp');togFab()">&#10010;</button></div>`;
+    el.innerHTML=`
+      <div class="fabi"><span class="fabl">Renda</span><button class="fabm" style="background:rgba(234,179,8,.15);border:1px solid rgba(234,179,8,.3);color:var(--gold)" onclick="cFab();openRd()">&#128176;</button></div>
+      <div class="fabi"><span class="fabl">Conta r&#225;pida</span><button class="fabm" style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.25);color:var(--purple)" onclick="cFab();openS()">&#9997;</button></div>
+      <div class="fabi"><span class="fabl">Nova conta fixa</span><button class="fabm" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);color:var(--blue)" onclick="cFab();openCANew()">&#128260;</button></div>`;
   } else if(tab==='an'){
     el.innerHTML=`<div class="fabi"><span class="fabl">Atualizar</span><button class="fabm" onclick="cFab();rAnual()">&#8635;</button></div>`;
   } else if(tab==='rend'){
@@ -2630,6 +2633,21 @@ function openCA(nomeKey, tipo, ano){
     const cur=document.getElementById('ca-row-'+cm);
     if(cur)cur.scrollIntoView({block:'center',behavior:'smooth'});
   },200);
+}
+
+function openCANew(){
+  const ano = anYear || new Date().getFullYear();
+  // Abrir openCA com nome vazio — todos os meses em branco
+  openCA('', 'fixo', ano);
+  // Ajustar título e sub
+  setTimeout(()=>{
+    const tit=document.getElementById('ca-tit');
+    if(tit)tit.textContent='Nova Conta Fixa';
+    const sub=document.getElementById('ca-sub');
+    if(sub)sub.textContent='Preencha o nome e os valores por mês';
+    const nomeInput=document.getElementById('ca-edit-nome');
+    if(nomeInput){nomeInput.value='';nomeInput.focus();}
+  },80);
 }
 
 function caSetTipo(t){

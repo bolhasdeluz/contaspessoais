@@ -36,7 +36,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
 #mlabel{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--tx);min-width:96px;text-align:center}
 
 /* SUMMARY */
-.summ{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px 16px}
+.summ{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px 16px}.summ:empty{display:none;padding:0}
 .sc{background:var(--sur);border:1px solid var(--bd);border-radius:var(--r);padding:8px 10px}
 .sc .lb{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-bottom:3px}
 .sc .vl{font-family:var(--mono);font-size:13px;font-weight:600}
@@ -45,7 +45,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
 .sc.disp .vl{color:var(--blue)}
 
 /* FILTERS */
-.frow{display:flex;gap:5px;padding:0 16px 10px;overflow-x:auto;scrollbar-width:none;align-items:center}
+.frow{display:flex;gap:5px;padding:0 16px 10px;overflow-x:auto;scrollbar-width:none;align-items:center}.frow:empty{display:none;padding:0}
 .frow::-webkit-scrollbar{display:none}
 .fb{flex-shrink:0;background:var(--sur);border:1px solid var(--bd);color:var(--mut);font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:var(--sans)}
 .fb:hover{border-color:var(--bd2);color:var(--dim)}
@@ -211,9 +211,6 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
 .attach-chip:hover{background:rgba(20,184,166,.2)}
 .attach-chip .ax{color:var(--red);font-size:11px;margin-left:2px;padding:0 2px}
 /* INÍCIO MÊS */
-.cbrow{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;padding:4px 0}
-.cbrow input[type=checkbox]{width:14px;height:14px;accent-color:var(--amber);cursor:pointer;flex-shrink:0}
-.cbrow span{font-size:12px;color:var(--dim)}
 .sec-inicio{margin-bottom:10px}
 .sec-inicio-hdr{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .sec-inicio-hdr::after{content:'';flex:1;height:1px;background:rgba(245,158,11,.25)}
@@ -263,39 +260,12 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
   padding:0 10px;min-width:52px;height:36px;
   border-right:none;
 }
-.anual-table td.td-act{
-  position:sticky;left:52px;z-index:10;
-  background:var(--sur2);
-  width:32px;min-width:32px;text-align:center;
-  padding:0 4px;height:36px;
-  border-right:2px solid var(--bd2);
-}
 .anual-table thead th.th-mes{
   left:0;min-width:52px;
 }
-.anual-table thead th.th-act{
-  position:sticky;left:52px;z-index:30;
-  background:var(--sur);
-  width:32px;min-width:32px;
-  border-right:2px solid var(--bd2);
-  border-bottom:2px solid var(--bd2);
-}
-.anual-table tr.cur-mes td.td-act{background:rgba(59,130,246,.08)}
 .anual-table tr.cur-mes td.td-mes{color:var(--tx);background:rgba(59,130,246,.08)}
 .anual-table tr.cur-mes td{background:rgba(59,130,246,.04)}
 
-/* Separador de grupo */
-.anual-table tr.grp-hdr td{
-  background:var(--bg);
-  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  padding:6px 10px;
-  border-bottom:1px solid var(--bd2);
-}
-.anual-table tr.grp-desp td{color:var(--amber)}
-.anual-table tr.grp-rec td{color:var(--teal)}
-.anual-table tr.grp-renda td{color:var(--gold)}
-.anual-table tr.grp-cart td{color:var(--blue)}
-.anual-table tr.grp-dj td{color:var(--purple)}
 
 /* Células de valor */
 .anual-table td.td-val{
@@ -321,7 +291,6 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
 .anual-table td.td-val input.desejo{color:var(--purple)}
 
 /* Status dot na célula */
-.anual-table td.td-val{position:relative}
 .anual-table td.td-val .stpip{
   position:absolute;left:4px;top:50%;transform:translateY(-50%);
   width:5px;height:5px;border-radius:50%;
@@ -394,7 +363,6 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
 .ca-val input{width:100%;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r);font-family:var(--mono);font-size:13px;font-weight:500;color:var(--tx);padding:6px 10px;outline:none}
 .ca-val input:focus{border-color:var(--blue);background:rgba(59,130,246,.07)}
 .ca-st{min-width:80px}
-.ca-st select{width:100%;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r);font-size:11px;color:var(--dim);padding:6px 6px;outline:none}
 .ca-row.pago .ca-mes{color:var(--green)}
 .ca-row.pago .ca-val input{color:var(--green)}
 
@@ -465,7 +433,7 @@ input[type=number]{-moz-appearance:textfield}
 .saldo-section-hdr::after{content:'';flex:1;height:1px;background:var(--bd)}
 
 /* TABBAR */
-.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(4,1fr);height:56px}
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(6,1fr);height:56px}
 .tabbtn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-family:var(--sans);font-size:10px;font-weight:500;transition:color .15s;padding:0}
 .tabbtn .tico{font-size:18px;line-height:1}
 .tabbtn.on.t-rend{color:var(--gold)}.tabbtn.on.t-desp{color:var(--tx)}.tabbtn.on.t-cart{color:var(--teal)}.tabbtn.on.t-desj{color:var(--purple)}.tabbtn.on.t-dv{color:var(--pink)}.tabbtn.on.t-an{color:var(--blue)}.tabbtn.on.t-saldo{color:var(--green)}
@@ -582,7 +550,7 @@ select option{background:#1c1c1c}
 
 <div class="content" id="content">
   <div class="pane" id="pane-saldo"><div id="saldo-body" style="padding:16px 16px 80px"></div></div>
-  <div class="pane on" id="pane-desp">
+  <div class="pane" id="pane-desp">
     <div class="desp-toggles" id="desp-toggle-inicio">
       <span>Separar in&#237;cio do m&#234;s</span>
       <div class="trk on" id="trk-inicio" onclick="togInicio()" style="cursor:pointer"><div class="tthm"></div></div>
@@ -620,10 +588,9 @@ select option{background:#1c1c1c}
   </div>
 </div>
 
-<nav class="tabbar" style="grid-template-columns:repeat(5,1fr)">
-  <button class="tabbtn t-rend" id="tb-rend" onclick="setTab('rend')"><span class="tico">&#128176;</span><span>Renda</span></button>
-  <button class="tabbtn t-desp on" id="tb-desp" onclick="setTab('saldo')"><span class="tico">&#128184;</span><span>Despesas</span></button>
+<nav class="tabbar">
   <button class="tabbtn t-saldo" id="tb-saldo" onclick="setTab('saldo')"><span class="tico">&#9878;&#65039;</span><span>Saldos</span></button>
+  <button class="tabbtn t-rend" id="tb-rend" onclick="setTab('rend')"><span class="tico">&#128176;</span><span>Renda</span></button>
   <button class="tabbtn t-cart" id="tb-cart" onclick="setTab('cart')"><span class="tico">&#128179;</span><span>Cart&#245;es</span></button>
   <button class="tabbtn t-desj" id="tb-desj" onclick="setTab('desj')"><span class="tico">&#128138;</span><span>Desejos</span></button>
   <button class="tabbtn t-dv" id="tb-dv" onclick="setTab('dv')"><span class="tico">&#128220;</span><span>D&#237;vidas</span></button>
@@ -860,17 +827,7 @@ let WL=JSON.parse(ls('abpp_desejos')||'[]');
 let DV=JSON.parse(ls('abpp_dividas')||'[]');        // dividas
 let CO=JSON.parse(ls('abpp_cartao_orca')||'{}');    // cartao no orcamento {cardId:bool}
 
-// Migrate old CC/CM to new card system
-(function migrate(){
-  const oldCC=JSON.parse(ls('abpp_credito')||'[]');
-  const oldCM=JSON.parse(ls('abpp_mercado')||'[]');
-  if(!cards.length&&(oldCC.length||oldCM.length)){
-    if(oldCC.length){const id=uid();cards.push({id,nome:'Cart\u00e3o de Cr\u00e9dito',tipo:'credito',limite:0,vencimento:10,createdAt:new Date().toISOString()});oldCC.forEach(i=>{cardRec.push({id:uid(),cardId:id,nome:i.nome,categoria:i.categoria||'Outros',obs:i.obs||'',meses:i.meses||{},createdAt:i.createdAt})})}
-    if(oldCM.length){const id=uid();cards.push({id,nome:'Cart\u00e3o Mercado',tipo:'mercado',limite:0,vencimento:10,createdAt:new Date().toISOString()});oldCM.forEach(i=>{cardRec.push({id:uid(),cardId:id,nome:i.nome,categoria:i.categoria||'Outros',obs:i.obs||'',meses:i.meses||{},createdAt:i.createdAt})})}
-    saveAll();
-  }
-  if(!selCard&&cards.length)selCard=cards[0].id;
-})();
+
 
 function saveAll(){
   setls('abpp_despesas',JSON.stringify(D));
@@ -883,16 +840,8 @@ function saveAll(){
   setls('abpp_dividas',JSON.stringify(DV));
   setls('abpp_cartao_orca',JSON.stringify(CO));
 }
-// Migração de dados: tenta recuperar chaves antigas caso RD esteja vazio
-(function migrateRenda(){
-  if(!RD.length){
-    const alt=['abpp_fontes','abpp_income','abpp_rendas'];
-    for(const k of alt){
-      const v=ls(k);
-      if(v){try{const parsed=JSON.parse(v);if(Array.isArray(parsed)&&parsed.length){RD=parsed;saveAll();console.log('Migrated renda from',k);break;}}catch(e){}}
-    }
-  }
-})();
+// Migração legada de renda
+if(!RD.length){['abpp_fontes','abpp_income','abpp_rendas'].forEach(k=>{if(!RD.length){try{const p=JSON.parse(ls(k)||'[]');if(p.length){RD=p;saveAll();}}catch(e){}}})}
 function uid(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36)}
 function brl(v){return'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -973,6 +922,7 @@ function applyFD(items){
 // ====== SUMMARY ======
 function rSumm(){
   const el=document.getElementById('summ');
+  if(tab==='saldo'||tab==='an'){el.innerHTML='';return;}
   if(tab==='desp'){
     const items=(D[cm]||[]).filter(i=>i.tipo==='fixo');
     let tot=items.reduce((a,i)=>a+Number(i.valor||0),0);
@@ -1027,6 +977,7 @@ function rSumm(){
 // ====== FILTER ROW ======
 function rFrow(){
   const el=document.getElementById('frow');
+  if(tab==='saldo'||tab==='an'){el.innerHTML='';return;}
   if(tab==='desp'){
     const selBtn=selMode?'':`<button class="fb brec" style="margin-left:auto" onclick="openBR()">&#9881; Recorrentes</button><button class="fb brec" onclick="togSelMode()">&#9745; Selecionar</button>`;
     el.innerHTML=`
@@ -1066,6 +1017,8 @@ function rFab(){
     } else {
       el.innerHTML=`<div class="fabi"><span class="fabl">Adicionar cart\u00e3o</span><button class="fabm" onclick="cFab();openCCfg()">+</button></div>`;
     }
+  } else if(tab==='saldo'){
+    el.innerHTML=`<div class="fabi"><span class="fabl">Lançar</span><button class="fabm" onclick="cFab();setTab('desp');togFab()">&#10010;</button></div>`;
   } else if(tab==='an'){
     el.innerHTML=`<div class="fabi"><span class="fabl">Atualizar</span><button class="fabm" onclick="cFab();rAnual()">&#8635;</button></div>`;
   } else if(tab==='rend'){
@@ -1436,8 +1389,7 @@ function rDesj(){
   items.forEach(i=>{if(i.mesPrevisto){byMonth[i.mesPrevisto]=byMonth[i.mesPrevisto]||[];byMonth[i.mesPrevisto].push(i)}else noMonth.push(i)});
   let h='';
   Object.keys(byMonth).sort().forEach(mes=>{
-    const[y,m]=mes.split('-').map(Number);
-    const isCur=mes===cm;
+      const isCur=mes===cm;
     const tot=byMonth[mes].reduce((a,i)=>a+Number(i.preco||0),0);
     h+=`<div class="cg"><div class="ch"><span class="cl" ${isCur?'style="color:var(--purple)"':''}>${MFL[m-1]} ${y}${isCur?' &#8212; este m\u00eas':''}</span><span class="cln"></span><span class="cs">${brl(tot)}</span></div>`;
     byMonth[mes].forEach(i=>{h+=djCard(i)});
@@ -1600,20 +1552,32 @@ function svDivida(){
 }
 
 // ====== MASTER RENDER ======
-function rContent(){rSumm();rFrow();if(tab==='desp')rDesp();else if(tab==='cart')rCart();else if(tab==='rend')rRend();else if(tab==='dv')rDV();else rDesj();adjHdr()}
+function rContent(){
+  rSumm();rFrow();
+  if(tab==='saldo')rSaldo();
+  else if(tab==='desp')rDesp();
+  else if(tab==='cart')rCart();
+  else if(tab==='rend')rRend();
+  else if(tab==='dv')rDV();
+  else if(tab==='desj')rDesj();
+  else if(tab==='an')rAnual();
+  adjHdr();
+}
 function render(){document.getElementById('mlabel').textContent=mlbl();rFab();rContent()}
 function adjHdr(){document.getElementById('content').style.paddingTop=document.getElementById('hdr').offsetHeight+'px'}
 
 // ====== TAB ======
-function setTab(t){tab=t;filt='todos';selMode=false;selIds.clear();document.getElementById('sel-footer').style.display='none';
+function setTab(t){
+  tab=t;filt='todos';selMode=false;selIds.clear();
+  document.getElementById('sel-footer').style.display='none';
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
   document.getElementById('pane-'+t)?.classList.add('on');
   document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('on'));
   document.getElementById('tb-'+t)?.classList.add('on');
   if(t==='cart'&&!selCard&&cards.length)selCard=cards[0].id;
-  if(t==='an'){anYear=new Date().getFullYear();rAnual();return;}
-  if(t==='saldo'){rSaldo();return;}
-  cFab();render();}
+  if(t==='an')anYear=new Date().getFullYear();
+  cFab();rContent();
+}
 function selC(id){selCard=id;filt='todos';rContent()}
 function togDjSection(){showDj=!showDj;const b=document.getElementById('dj-sec-body');if(b)b.style.display=showDj?'block':'none';rSumm();rContent()}
 
@@ -2242,19 +2206,6 @@ function togAFTodos(){
 
 function chAnYear(d){anYear+=d;rAnual()}
 
-function anOpenMes(mes){
-  // Muda a aba pra Despesas e navega para o mês clicado
-  const[y,m]=mes.split('-').map(Number);
-  // Se for mês diferente, navegar
-  if(mes!==cm){
-    // ajustar cm para o mês clicado
-    curY2=y;curM2=m;
-    cm=mes;
-    updHeader();
-  }
-  setTab('desp');
-}
-
 function rAnual(){
   document.getElementById('an-year-lbl').textContent=anYear;
   const body=document.getElementById('anual-body');
@@ -2313,11 +2264,6 @@ function rAnual(){
   thead+='<th class="th-tot" style="min-width:36px"></th>';
   thead+='<th class="th-tot">Total</th>';
   thead+='</tr></thead>';
-
-  // Separadores de grupo
-  function grpRow(label,cls,span){
-    return`<tr class="grp-hdr ${cls}"><td colspan="${span+2}">${label}</td></tr>`;
-  }
 
   // Gerar tbody
   let tbody='<tbody>';
@@ -2548,10 +2494,7 @@ function anEditDj(djId, mes){
 }
 function _anSetMes(mes){
   cm=mes;
-  const[y,m]=mes.split('-').map(Number);
-  curY2=y; curM2=m;
-  updHeader();
-  setTab('desp');
+  document.getElementById('mlabel').textContent=mlbl();adjHdr();
 }
 
 
@@ -2850,7 +2793,7 @@ document.addEventListener('touchend',e=>{
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 if(!selCard&&cards.length)selCard=cards[0].id;
-render();
+setTab('saldo');
 </script>
 </body>
 </html>

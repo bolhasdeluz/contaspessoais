@@ -261,8 +261,26 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
   background:var(--sur2);
   font-size:11px;font-weight:600;color:var(--dim);
   padding:0 10px;min-width:52px;height:36px;
+  border-right:none;
+}
+.anual-table td.td-act{
+  position:sticky;left:52px;z-index:10;
+  background:var(--sur2);
+  width:32px;min-width:32px;text-align:center;
+  padding:0 4px;height:36px;
   border-right:2px solid var(--bd2);
 }
+.anual-table thead th.th-mes{
+  left:0;min-width:52px;
+}
+.anual-table thead th.th-act{
+  position:sticky;left:52px;z-index:30;
+  background:var(--sur);
+  width:32px;min-width:32px;
+  border-right:2px solid var(--bd2);
+  border-bottom:2px solid var(--bd2);
+}
+.anual-table tr.cur-mes td.td-act{background:rgba(59,130,246,.08)}
 .anual-table tr.cur-mes td.td-mes{color:var(--tx);background:rgba(59,130,246,.08)}
 .anual-table tr.cur-mes td{background:rgba(59,130,246,.04)}
 
@@ -499,6 +517,7 @@ select option{background:#1c1c1c}
       <div class="af-chip af-ctx on" id="af-ctx" onclick="togAF('ctx')">&#128179; Cart&#227;o Txn</div>
       <div class="af-chip af-renda on" id="af-renda" onclick="togAF('renda')">&#128176; Renda</div>
       <div class="af-chip af-dj on" id="af-dj" onclick="togAF('dj')">&#11088; Desejos</div>
+      <div class="af-chip" id="af-todos" onclick="togAFTodos()" style="margin-left:auto;color:var(--dim)">Ver todos</div>
     </div>
     <div class="anual-wrap"><div id="anual-body"></div></div>
   </div>
@@ -2087,6 +2106,17 @@ function togAF(k){
   if(el)el.classList.toggle('on',anFilters[k]);
   rAnual();
 }
+function togAFTodos(){
+  const allOn=Object.values(anFilters).every(v=>v);
+  Object.keys(anFilters).forEach(k=>{
+    anFilters[k]=!allOn;
+    const el=document.getElementById('af-'+k);
+    if(el)el.classList.toggle('on',!allOn);
+  });
+  const btn=document.getElementById('af-todos');
+  if(btn)btn.textContent=allOn?'Ver todos':'Ocultar todos';
+  rAnual();
+}
 
 function chAnYear(d){anYear+=d;rAnual()}
 
@@ -2151,7 +2181,7 @@ function rAnual(){
 
   // Gerar thead
   let thead='<thead><tr>';
-  thead+='<th class="th-mes">Mês</th>';
+  thead+='<th class="th-mes">Mês</th><th class="th-act"></th>';
   if(despCols.length){despCols.forEach(n=>{thead+=`<th title="${esc(n)}">${esc(n.length>10?n.slice(0,9)+'…':n)}</th>`;colTots['d_'+n]=0})}
   if(extCols.length){extCols.forEach(n=>{thead+=`<th title="${esc(n)}" style="color:var(--purple)">${esc(n.length>10?n.slice(0,9)+'…':n)}</th>`;colTots['e_'+n]=0})}
   if(cartCols.length){cartCols.forEach(r=>{thead+=`<th title="${esc(r.nome)} (${esc(r.cardNome)})" style="color:var(--teal)">${esc(r.nome.length>10?r.nome.slice(0,9)+'…':r.nome)}</th>`;colTots['cr_'+r.id]=0})}
@@ -2257,15 +2287,15 @@ function rAnual(){
     rowTots.push(rowTotal);
     tbody+=`<tr${isCur?' class="cur-mes"':''}>`;
     tbody+=`<td class="td-mes">${MPT[mi-1]}</td>`;
+    tbody+=`<td class="td-act"><button onclick="anOpenMes('${k}')" style="background:none;border:1px solid var(--bd2);border-radius:3px;color:var(--mut);font-size:11px;padding:1px 5px;cursor:pointer" title="Editar ${MPT[mi-1]}">&#9998;</button></td>`;
     tbody+=cells;
-    tbody+=`<td class="td-tot" style="text-align:center;padding:0 4px"><button onclick="anOpenMes('${k}')" style="background:none;border:1px solid var(--bd2);border-radius:4px;color:var(--mut);font-size:11px;padding:2px 6px;cursor:pointer" title="Ver lançamentos de ${MPT[mi-1]}">&#9998;</button></td>`;
     tbody+=`<td class="td-tot">${rowTotal>0?vn(rowTotal):''}</td>`;
     tbody+='</tr>';
   }
   tbody+='</tbody>';
 
   // tfoot — totais por coluna
-  let tfoot='<tfoot><tr><td class="td-mes">Total</td><td class="td-tot"></td>';
+  let tfoot='<tfoot><tr><td class="td-mes">Total</td><td class="td-act"></td>';
   despCols.forEach(n=>{const t=colTots['d_'+n];tfoot+=`<td class="td-tot" style="color:var(--amber)">${t>0?vn(t):''}</td>`});
   extCols.forEach(n=>{const t=colTots['e_'+n];tfoot+=`<td class="td-tot" style="color:var(--purple)">${t>0?vn(t):''}</td>`});
   cartCols.forEach(r=>{const t=colTots['cr_'+r.id];tfoot+=`<td class="td-tot" style="color:var(--teal)">${t>0?vn(t):''}</td>`});

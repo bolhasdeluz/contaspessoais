@@ -430,11 +430,45 @@ input[type=number]{-moz-appearance:textfield}
 .ca-cod-btn.copied{color:var(--green);border-color:rgba(34,197,94,.3)}
 .ca-pix-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);min-width:28px}
 
+
+.ca-url-btn{flex-shrink:0;font-size:11px;padding:2px 7px;border-radius:3px;border:1px solid var(--bd2);background:var(--sur2);color:var(--mut);cursor:pointer;transition:all .12s;text-decoration:none;display:inline-flex;align-items:center}
+.ca-url-btn:hover{color:var(--blue);border-color:rgba(59,130,246,.4)}
+.ca-url-btn.has{color:var(--blue);border-color:rgba(59,130,246,.35);background:rgba(59,130,246,.08)}
+.ca-url-input{width:0;max-width:0;overflow:hidden;opacity:0;transition:all .2s;background:transparent;border:none;border-bottom:1px solid var(--bd2);font-size:10px;font-family:var(--mono);color:var(--dim);padding:2px 4px;outline:none}
+.ca-url-input.open{width:90px;max-width:90px;opacity:1}
+.ca-url-input:focus{border-color:var(--blue)}
+
+
+/* ====== TELA SALDOS ====== */
+.saldo-mes-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.saldo-mes-label{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--dim)}
+
+.saldo-card{background:var(--sur);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.saldo-card-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.saldo-card-val{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--tx)}
+.saldo-card-val.green{color:var(--green)}
+.saldo-card-val.amber{color:var(--amber)}
+.saldo-card-val.red{color:#f87171}
+.saldo-card-val.blue{color:var(--blue)}
+.saldo-card-val.purple{color:var(--purple)}
+.saldo-card-val.teal{color:var(--teal)}
+.saldo-card-sub{font-size:11px;color:var(--mut);margin-top:4px}
+
+.saldo-divider{height:1px;background:var(--bd2);margin:14px 0}
+
+.saldo-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}
+.saldo-row:last-child{border-bottom:none}
+.saldo-row-lbl{font-size:12px;color:var(--dim)}
+.saldo-row-val{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--tx)}
+
+.saldo-section-hdr{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+.saldo-section-hdr::after{content:'';flex:1;height:1px;background:var(--bd)}
+
 /* TABBAR */
 .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(4,1fr);height:56px}
 .tabbtn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-family:var(--sans);font-size:10px;font-weight:500;transition:color .15s;padding:0}
 .tabbtn .tico{font-size:18px;line-height:1}
-.tabbtn.on.t-rend{color:var(--gold)}.tabbtn.on.t-desp{color:var(--tx)}.tabbtn.on.t-cart{color:var(--teal)}.tabbtn.on.t-desj{color:var(--purple)}.tabbtn.on.t-dv{color:var(--pink)}.tabbtn.on.t-an{color:var(--blue)}
+.tabbtn.on.t-rend{color:var(--gold)}.tabbtn.on.t-desp{color:var(--tx)}.tabbtn.on.t-cart{color:var(--teal)}.tabbtn.on.t-desj{color:var(--purple)}.tabbtn.on.t-dv{color:var(--pink)}.tabbtn.on.t-an{color:var(--blue)}.tabbtn.on.t-saldo{color:var(--green)}
 
 /* FAB */
 .fabwrap{position:fixed;bottom:68px;right:18px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
@@ -547,6 +581,7 @@ select option{background:#1c1c1c}
 </header>
 
 <div class="content" id="content">
+  <div class="pane" id="pane-saldo"><div id="saldo-body" style="padding:16px 16px 80px"></div></div>
   <div class="pane on" id="pane-desp">
     <div class="desp-toggles" id="desp-toggle-inicio">
       <span>Separar in&#237;cio do m&#234;s</span>
@@ -585,9 +620,10 @@ select option{background:#1c1c1c}
   </div>
 </div>
 
-<nav class="tabbar" style="grid-template-columns:repeat(6,1fr)">
+<nav class="tabbar" style="grid-template-columns:repeat(5,1fr)">
   <button class="tabbtn t-rend" id="tb-rend" onclick="setTab('rend')"><span class="tico">&#128176;</span><span>Renda</span></button>
-  <button class="tabbtn t-desp on" id="tb-desp" onclick="setTab('desp')"><span class="tico">&#128184;</span><span>Despesas</span></button>
+  <button class="tabbtn t-desp on" id="tb-desp" onclick="setTab('saldo')"><span class="tico">&#128184;</span><span>Despesas</span></button>
+  <button class="tabbtn t-saldo" id="tb-saldo" onclick="setTab('saldo')"><span class="tico">&#9878;&#65039;</span><span>Saldos</span></button>
   <button class="tabbtn t-cart" id="tb-cart" onclick="setTab('cart')"><span class="tico">&#128179;</span><span>Cart&#245;es</span></button>
   <button class="tabbtn t-desj" id="tb-desj" onclick="setTab('desj')"><span class="tico">&#128138;</span><span>Desejos</span></button>
   <button class="tabbtn t-dv" id="tb-dv" onclick="setTab('dv')"><span class="tico">&#128220;</span><span>D&#237;vidas</span></button>
@@ -1576,6 +1612,7 @@ function setTab(t){tab=t;filt='todos';selMode=false;selIds.clear();document.getE
   document.getElementById('tb-'+t)?.classList.add('on');
   if(t==='cart'&&!selCard&&cards.length)selCard=cards[0].id;
   if(t==='an'){anYear=new Date().getFullYear();rAnual();return;}
+  if(t==='saldo'){rSaldo();return;}
   cFab();render();}
 function selC(id){selCard=id;filt='todos';rContent()}
 function togDjSection(){showDj=!showDj;const b=document.getElementById('dj-sec-body');if(b)b.style.display=showDj?'block':'none';rSumm();rContent()}
@@ -2540,6 +2577,8 @@ function openCA(nomeKey, tipo, ano){
     const isPago=st==='pago';
     caState.meses[k]={id:entry?.id||null, valor:val, status:st};
     const cod=caMeta[k]?.cod||'';
+    const url=caMeta[k]?.url||'';
+    if(url&&caState.meses[k])caState.meses[k].url=url;
     html+=`<div class="ca-row${isCur?' cur':''}${isPago?' pago':''}" id="ca-row-${k}">
       <div class="ca-mes">${MPT[m-1]}</div>
       <div class="ca-val"><input type="number" step="0.01" min="0" value="${val}" placeholder="—" id="ca-val-${k}" oninput="caRowUpd('${k}',this.value)"/></div>
@@ -2547,6 +2586,8 @@ function openCA(nomeKey, tipo, ano){
       <div class="ca-cod-wrap">
         <input class="ca-cod-input" id="ca-cod-${k}" value="${cod}" placeholder="Cód. barras" oninput="caRowCodUpd('${k}',this.value)"/>
         <button class="ca-cod-btn" id="ca-cod-btn-${k}" onclick="caCopyCod('${k}')" title="Copiar código de barras">&#128203;</button>
+        <input class="ca-url-input${caMeta[k]?.url?' open':''}" id="ca-url-${k}" value="${caMeta[k]?.url||''}" placeholder="https://..." oninput="caRowUrlUpd('${k}',this.value)" onblur="caUrlBlur('${k}')"/>
+        <button class="ca-url-btn${caMeta[k]?.url?' has':''}" id="ca-url-btn-${k}" onclick="caUrlClick('${k}')" title="Link do boleto">&#128279;</button>
       </div>
     </div>`;
   }
@@ -2569,6 +2610,30 @@ function caRowUpd(k, val){
 function caRowCodUpd(k, cod){
   if(!caState.meses[k])caState.meses[k]={id:null,valor:'',status:'pendente'};
   caState.meses[k].cod=cod;
+}
+function caRowUrlUpd(k, url){
+  if(!caState.meses[k])caState.meses[k]={id:null,valor:'',status:'pendente'};
+  caState.meses[k].url=url;
+  const btn=document.getElementById('ca-url-btn-'+k);
+  if(btn)btn.classList.toggle('has',!!url.trim());
+}
+function caUrlBlur(k){
+  // esconde o input se vazio
+  const inp=document.getElementById('ca-url-'+k);
+  const url=inp?.value?.trim();
+  if(!url)inp?.classList.remove('open');
+}
+function caUrlClick(k){
+  const inp=document.getElementById('ca-url-'+k);
+  const url=inp?.value?.trim()||(caState.meses[k]?.url||'').trim();
+  if(url){
+    // tem URL — abre
+    window.open(url.startsWith('http')?url:'https://'+url,'_blank');
+  } else {
+    // sem URL — abre o campo pra digitar
+    inp?.classList.add('open');
+    setTimeout(()=>inp?.focus(),50);
+  }
 }
 function caRowStToggle(k){
   if(!caState.meses[k])caState.meses[k]={id:null,valor:'',status:'pendente'};
@@ -2596,7 +2661,7 @@ function caSaveAll(){
   // Salvar PIX e códigos de barras na meta da conta
   const meta={pix:caState.pix||''};
   Object.entries(caState.meses).forEach(([k,data])=>{
-    if(data.cod)meta[k]={cod:data.cod};
+    if(data.cod||data.url)meta[k]={cod:data.cod||'',url:data.url||''};
   });
   setls(caState.caKey, JSON.stringify(meta));
   saveAll();
@@ -2636,6 +2701,124 @@ function caCopyCod(k){
     const btn=document.getElementById('ca-cod-btn-'+k);
     if(btn){btn.classList.add('copied');btn.textContent='✓';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='&#128203;';btn.innerHTML='&#128203;';},2000);}
   }).catch(()=>alert(cod));
+}
+
+
+// ====== TELA SALDOS ======
+function rSaldo(){
+  const el=document.getElementById('saldo-body');
+  if(!el)return;
+
+  const all=D[cm]||[];
+
+  // Entradas: renda recebida/prevista do mês
+  const totalEntradas=RD.reduce((acc,r)=>{
+    const mes=r.meses?.[cm]||{};
+    return acc+Number(mes.valor||0);
+  },0);
+
+  // Saídas início do mês (inicioMes=true)
+  const saidasInicio=all.filter(i=>i.inicioMes).reduce((a,i)=>a+Number(i.valor||0),0);
+
+  // Saldo após início do mês
+  const saldoAposInicio=totalEntradas-saidasInicio;
+
+  // Saídas ao longo do mês (não inicio)
+  const saidasMes=all.filter(i=>!i.inicioMes).reduce((a,i)=>a+Number(i.valor||0),0);
+
+  // Saldo atual (todas as saídas)
+  const totalSaidas=saidasInicio+saidasMes;
+  const saldoAtual=totalEntradas-totalSaidas;
+
+  // Semanas restantes no mês (da semana atual até o fim do mês)
+  const hoje=new Date();
+  const [cy,cmo]=cm.split('-').map(Number);
+  const fimMes=new Date(cy,cmo,0); // último dia do mês
+  const diasRestantes=Math.max(0,Math.ceil((fimMes-hoje)/(1000*60*60*24)));
+  const semanasRestantes=Math.max(1,Math.ceil(diasRestantes/7));
+  const porSemana=saldoAtual/semanasRestantes;
+
+  // Total de desejos
+  const totalDesejos=WL.filter(w=>w.status!=='comprado').reduce((a,w)=>a+Number(w.preco||0),0);
+
+  // Detalhes de renda
+  const rendaRows=RD.map(r=>{
+    const mes=r.meses?.[cm]||{};
+    const v=Number(mes.valor||0);
+    const st=mes.status==='recebido'?'✓':'⏳';
+    return v>0?`<div class="saldo-row"><span class="saldo-row-lbl">${st} ${esc(r.nome)}</span><span class="saldo-row-val" style="color:var(--gold)">${brl(v)}</span></div>`:'';
+  }).join('');
+
+  // Detalhes saídas início
+  const inicioRows=all.filter(i=>i.inicioMes).map(i=>{
+    const st=i.status==='pago'?'✓':'⏳';
+    return `<div class="saldo-row"><span class="saldo-row-lbl">${st} ${esc(i.nome)}</span><span class="saldo-row-val" style="color:var(--amber)">${brl(i.valor)}</span></div>`;
+  }).join('');
+
+  // Detalhes saídas ao longo
+  const mesRows=all.filter(i=>!i.inicioMes).map(i=>{
+    const st=i.status==='pago'?'✓':'⏳';
+    return `<div class="saldo-row"><span class="saldo-row-lbl">${st} ${esc(i.nome)}</span><span class="saldo-row-val">${brl(i.valor)}</span></div>`;
+  }).join('');
+
+  const saldoAposInicioColor=saldoAposInicio>=0?'green':'red';
+  const saldoAtualColor=saldoAtual>=0?(saldoAtual<totalEntradas*0.2?'amber':'green'):'red';
+  const semanaColor=porSemana>=0?(porSemana<200?'amber':'green'):'red';
+
+  el.innerHTML=`
+    <div class="saldo-mes-nav">
+      <button class="mbtn" onclick="chM(-1)">&#8249;</button>
+      <span class="saldo-mes-label">${MPT[Number(cm.split('-')[1])-1]} ${cm.split('-')[0]}</span>
+      <button class="mbtn" onclick="chM(1)">&#8250;</button>
+    </div>
+
+    <div class="saldo-section-hdr">&#128176; Entradas</div>
+    <div class="saldo-card" style="border-color:rgba(234,179,8,.2)">
+      <div class="saldo-card-lbl">Total de entradas</div>
+      <div class="saldo-card-val" style="color:var(--gold)">${brl(totalEntradas)}</div>
+      ${rendaRows?`<div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:8px">${rendaRows}</div>`:'<div class="saldo-card-sub">Nenhuma renda cadastrada para este mês</div>'}
+    </div>
+
+    <div class="saldo-section-hdr">&#9889; Saídas do início do mês</div>
+    <div class="saldo-card" style="border-color:rgba(245,158,11,.2)">
+      <div class="saldo-card-lbl">Total de saídas fixas imediatas</div>
+      <div class="saldo-card-val amber">${brl(saidasInicio)}</div>
+      ${inicioRows?`<div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:8px">${inicioRows}</div>`:'<div class="saldo-card-sub">Nenhuma conta marcada como "início do mês"</div>'}
+    </div>
+
+    <div class="saldo-card" style="border-color:rgba(34,197,94,.15)">
+      <div class="saldo-card-lbl">Saldo após saídas do início</div>
+      <div class="saldo-card-val ${saldoAposInicioColor}">${brl(saldoAposInicio)}</div>
+      <div class="saldo-card-sub">${brl(totalEntradas)} − ${brl(saidasInicio)}</div>
+    </div>
+
+    <div class="saldo-section-hdr">&#128197; Ao longo do mês</div>
+    <div class="saldo-card">
+      <div class="saldo-card-lbl">Saídas ao longo do mês</div>
+      <div class="saldo-card-val amber">${brl(saidasMes)}</div>
+      ${mesRows?`<div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:8px">${mesRows}</div>`:'<div class="saldo-card-sub">Nenhum lançamento ao longo do mês</div>'}
+    </div>
+
+    <div class="saldo-card" style="border-color:rgba(34,197,94,.2)">
+      <div class="saldo-card-lbl">Saldo atual (todas as saídas)</div>
+      <div class="saldo-card-val ${saldoAtualColor}">${brl(saldoAtual)}</div>
+      <div class="saldo-card-sub">${brl(totalEntradas)} − ${brl(totalSaidas)}</div>
+    </div>
+
+    <div class="saldo-divider"></div>
+
+    <div class="saldo-card" style="border-color:rgba(59,130,246,.2)">
+      <div class="saldo-card-lbl">Por semana até o fim do mês</div>
+      <div class="saldo-card-val ${semanaColor}">${brl(porSemana)}</div>
+      <div class="saldo-card-sub">${semanasRestantes} semana${semanasRestantes!==1?'s':''} restante${semanasRestantes!==1?'s':''} · ${diasRestantes} dias</div>
+    </div>
+
+    <div class="saldo-card" style="border-color:rgba(168,85,247,.2)">
+      <div class="saldo-card-lbl">Total de desejos pendentes</div>
+      <div class="saldo-card-val purple">${brl(totalDesejos)}</div>
+      <div class="saldo-card-sub">${WL.filter(w=>w.status!=='comprado').length} item${WL.filter(w=>w.status!=='comprado').length!==1?'s':''} na lista</div>
+    </div>
+  `;
 }
 
 // ====== SWIPE TO CHANGE MONTH ======

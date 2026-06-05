@@ -432,11 +432,54 @@ input[type=number]{-moz-appearance:textfield}
 .saldo-section-hdr{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:16px 0 8px;display:flex;align-items:center;gap:8px}
 .saldo-section-hdr::after{content:'';flex:1;height:1px;background:var(--bd)}
 
+
+/* ====== ABA MÊS ====== */
+.mes-section{margin-bottom:18px}
+.mes-sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-bottom:8px}
+.mes-sec-tit{font-size:9px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+.mes-sec-tit::after{content:'';flex:1;height:1px}
+.mes-sec-tit.renda{color:var(--gold)}.mes-sec-tit.renda::after{background:rgba(234,179,8,.25)}
+.mes-sec-tit.inicio{color:var(--amber)}.mes-sec-tit.inicio::after{background:rgba(245,158,11,.2)}
+.mes-sec-tit.despesas{color:var(--dim)}.mes-sec-tit.despesas::after{background:var(--bd)}
+.mes-sec-tit.cartao{color:var(--teal)}.mes-sec-tit.cartao::after{background:rgba(20,184,166,.2)}
+.mes-sec-tit.desejos{color:var(--purple)}.mes-sec-tit.desejos::after{background:rgba(168,85,247,.2)}
+.mes-sec-tot{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--mut);flex-shrink:0;margin-left:8px}
+.mes-item{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--bd)}
+.mes-item:last-child{border-bottom:none}
+.mes-item-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--bd2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:8px;transition:all .15s}
+.mes-item-dot.pago{background:var(--green);border-color:var(--green);color:#000}
+.mes-item-dot.pendente{border-color:var(--amber)}
+.mes-item-dot.recebido{background:var(--gold);border-color:var(--gold);color:#000}
+.mes-item-dot.desejo{border-color:var(--purple)}
+.mes-item-nome{flex:1;font-size:13px;font-weight:500;color:var(--tx);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mes-item-nome.pago,.mes-item-nome.recebido{color:var(--dim)}
+.mes-item-val{font-family:var(--mono);font-size:13px;font-weight:600;flex-shrink:0}
+.mes-item-val.pago{color:var(--green)}.mes-item-val.pendente{color:var(--amber)}
+.mes-item-val.recebido{color:var(--gold)}.mes-item-val.desejo{color:var(--purple)}
+.mes-renda-sep{height:1px;background:var(--bd2);margin:6px 16px 18px}
+
+/* Saldo minimizável */
+.saldo-card-toggle{cursor:pointer;user-select:none}
+.saldo-card-toggle .saldo-card-lbl{display:flex;align-items:center;justify-content:space-between}
+.saldo-detail{overflow:hidden;transition:max-height .25s ease}
+.saldo-detail.collapsed{max-height:0!important}
+
+/* openCA — campos de edição da conta */
+.ca-edit-fields{padding:10px 16px 6px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--bd)}
+.ca-edit-row{display:flex;gap:8px;align-items:center}
+.ca-edit-row label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);min-width:52px}
+.ca-edit-input{flex:1;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r);font-size:13px;color:var(--tx);padding:6px 10px;outline:none}
+.ca-edit-input:focus{border-color:var(--blue)}
+.ca-tipo-row{display:flex;gap:6px}
+.ca-tipo-btn{flex:1;padding:5px 0;border-radius:var(--r);font-size:11px;font-weight:600;border:1px solid var(--bd2);background:var(--sur2);color:var(--mut);cursor:pointer;transition:all .15s;text-align:center}
+.ca-tipo-btn.on.fixo{background:rgba(59,130,246,.12);color:var(--blue);border-color:rgba(59,130,246,.35)}
+.ca-tipo-btn.on.extra{background:rgba(168,85,247,.12);color:var(--purple);border-color:rgba(168,85,247,.35)}
+
 /* TABBAR */
-.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(6,1fr);height:56px}
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(7,1fr);height:56px}
 .tabbtn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-family:var(--sans);font-size:10px;font-weight:500;transition:color .15s;padding:0}
 .tabbtn .tico{font-size:18px;line-height:1}
-.tabbtn.on.t-rend{color:var(--gold)}.tabbtn.on.t-desp{color:var(--tx)}.tabbtn.on.t-cart{color:var(--teal)}.tabbtn.on.t-desj{color:var(--purple)}.tabbtn.on.t-dv{color:var(--pink)}.tabbtn.on.t-an{color:var(--blue)}.tabbtn.on.t-saldo{color:var(--green)}
+.tabbtn.on.t-rend{color:var(--gold)}.tabbtn.on.t-desp{color:var(--tx)}.tabbtn.on.t-cart{color:var(--teal)}.tabbtn.on.t-desj{color:var(--purple)}.tabbtn.on.t-dv{color:var(--pink)}.tabbtn.on.t-an{color:var(--blue)}.tabbtn.on.t-saldo{color:var(--green)}.tabbtn.on.t-mes{color:var(--teal)}
 
 /* FAB */
 .fabwrap{position:fixed;bottom:68px;right:18px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
@@ -550,6 +593,7 @@ select option{background:#1c1c1c}
 
 <div class="content" id="content">
   <div class="pane" id="pane-saldo"><div id="saldo-body" style="padding:16px 16px 80px"></div></div>
+  <div class="pane" id="pane-mes"><div id="mes-body" style="padding:12px 0 80px"></div></div>
   <div class="pane" id="pane-desp">
     <div class="desp-toggles" id="desp-toggle-inicio">
       <span>Separar in&#237;cio do m&#234;s</span>
@@ -588,8 +632,9 @@ select option{background:#1c1c1c}
   </div>
 </div>
 
-<nav class="tabbar">
+<nav class="tabbar" id="tabbar">
   <button class="tabbtn t-saldo" id="tb-saldo" onclick="setTab('saldo')"><span class="tico">&#9878;&#65039;</span><span>Saldos</span></button>
+  <button class="tabbtn t-mes" id="tb-mes" onclick="setTab('mes')"><span class="tico">&#128197;</span><span>M&#234;s</span></button>
   <button class="tabbtn t-rend" id="tb-rend" onclick="setTab('rend')"><span class="tico">&#128176;</span><span>Renda</span></button>
   <button class="tabbtn t-cart" id="tb-cart" onclick="setTab('cart')"><span class="tico">&#128179;</span><span>Cart&#245;es</span></button>
   <button class="tabbtn t-desj" id="tb-desj" onclick="setTab('desj')"><span class="tico">&#128138;</span><span>Desejos</span></button>
@@ -624,9 +669,26 @@ select option{background:#1c1c1c}
 <div class="ov" id="ov-ca">
 <div class="modal" style="max-height:90vh;display:flex;flex-direction:column">
   <div class="mh"><span id="ca-tit">Conta</span><button class="mcl" onclick="fClose('ov-ca')">&#10005;</button></div>
-  <div style="padding:0 16px 8px;border-bottom:1px solid var(--bd)">
-    <div style="font-size:11px;color:var(--mut)" id="ca-sub"></div>
-    <div class="ca-pix-row" id="ca-pix-row">
+  <div style="padding:8px 16px 8px;border-bottom:1px solid var(--bd)">
+    <div style="font-size:11px;color:var(--mut);margin-bottom:8px" id="ca-sub"></div>
+    <div class="ca-edit-fields" style="padding:0;border-bottom:none">
+      <div class="ca-edit-row">
+        <label>Nome</label>
+        <input class="ca-edit-input" id="ca-edit-nome" oninput="caState.nomeEdit=this.value"/>
+      </div>
+      <div class="ca-edit-row">
+        <label>Categoria</label>
+        <select class="ca-edit-input" id="ca-edit-cat" onchange="caState.catEdit=this.value"></select>
+      </div>
+      <div class="ca-edit-row">
+        <label>Tipo</label>
+        <div class="ca-tipo-row" style="flex:1">
+          <button class="ca-tipo-btn fixo" id="ca-tipo-fixo" onclick="caSetTipo('fixo')">&#128260; Fixo</button>
+          <button class="ca-tipo-btn extra" id="ca-tipo-extra" onclick="caSetTipo('extra')">&#10024; Extra</button>
+        </div>
+      </div>
+    </div>
+    <div class="ca-pix-row" id="ca-pix-row" style="padding:8px 0 0">
       <span class="ca-pix-lbl">PIX</span>
       <input class="ca-pix-input" id="ca-pix-input" placeholder="Chave PIX (email, CPF, telefone...)" oninput="caState.pix=this.value"/>
       <button class="ca-pix-btn" id="ca-pix-btn" onclick="caCopyPix()">&#128203; Copiar PIX</button>
@@ -1017,7 +1079,7 @@ function rFab(){
     } else {
       el.innerHTML=`<div class="fabi"><span class="fabl">Adicionar cart\u00e3o</span><button class="fabm" onclick="cFab();openCCfg()">+</button></div>`;
     }
-  } else if(tab==='saldo'){
+  } else if(tab==='saldo'||tab==='mes'){
     el.innerHTML=`<div class="fabi"><span class="fabl">Lançar</span><button class="fabm" onclick="cFab();setTab('desp');togFab()">&#10010;</button></div>`;
   } else if(tab==='an'){
     el.innerHTML=`<div class="fabi"><span class="fabl">Atualizar</span><button class="fabm" onclick="cFab();rAnual()">&#8635;</button></div>`;
@@ -1555,6 +1617,7 @@ function svDivida(){
 function rContent(){
   rSumm();rFrow();
   if(tab==='saldo')rSaldo();
+  else if(tab==='mes')rMes();
   else if(tab==='desp')rDesp();
   else if(tab==='cart')rCart();
   else if(tab==='rend')rRend();
@@ -2505,7 +2568,7 @@ function openCA(nomeKey, tipo, ano){
   // Carregar PIX salvo para esta conta
   const caKey='abpp_ca_'+nomeKey.toLowerCase().replace(/\s+/g,'_');
   const caMeta=JSON.parse(ls(caKey)||'{}');
-  caState={nomeKey, tipo, ano, meses:{}, pix:caMeta.pix||'', caKey};
+  caState={nomeKey, tipo, ano, meses:{}, pix:caMeta.pix||'', caKey, nomeEdit:nomeKey, catEdit:'', tipoEdit:tipo};
   document.getElementById('ca-tit').textContent=nomeKey;
   const tipoLabel=tipo==='fixo'?'Conta fixa recorrente':'Despesa extra';
   document.getElementById('ca-sub').textContent=tipoLabel+' · '+ano;
@@ -2538,6 +2601,12 @@ function openCA(nomeKey, tipo, ano){
   // Preencher PIX
   const pixInput=document.getElementById('ca-pix-input');
   if(pixInput)pixInput.value=caState.pix||'';
+  // Preencher campos editáveis da conta
+  const nomeInput=document.getElementById('ca-edit-nome');
+  if(nomeInput)nomeInput.value=nomeKey;
+  fillCat('ca-edit-cat', caMeta.cat||'');
+  caState.catEdit=caMeta.cat||'';
+  caSetTipo(tipo);
   openOv('ov-ca');
   // scroll para o mês atual
   setTimeout(()=>{
@@ -2546,6 +2615,13 @@ function openCA(nomeKey, tipo, ano){
   },200);
 }
 
+function caSetTipo(t){
+  caState.tipoEdit=t;
+  const bf=document.getElementById('ca-tipo-fixo');
+  const be=document.getElementById('ca-tipo-extra');
+  if(bf){bf.classList.toggle('on',t==='fixo');}
+  if(be){be.classList.toggle('on',t==='extra');}
+}
 function caRowUpd(k, val){
   if(!caState.meses[k])caState.meses[k]={id:null,valor:'',status:'pendente'};
   caState.meses[k].valor=val;
@@ -2590,19 +2666,34 @@ function caRowStToggle(k){
 }
 
 function caSaveAll(){
-  const{nomeKey,tipo,ano,meses}=caState;
+  const{nomeKey,tipo,ano,meses,nomeEdit,catEdit,tipoEdit}=caState;
+  const novoNome=(nomeEdit||nomeKey).trim();
+  const novoCat=catEdit||'Outros';
+  const novoTipo=tipoEdit||tipo;
+  const novoRec=novoTipo==='fixo';
+
+  // Renomear/reclassificar em TODOS os meses que já existem
+  const nomeKeyLow=nomeKey.trim().toLowerCase();
+  Object.keys(D).forEach(k=>{
+    D[k]=(D[k]||[]).map(i=>{
+      if(i.nome.trim().toLowerCase()===nomeKeyLow&&i.recorrente===(tipo==='fixo')){
+        return {...i,nome:novoNome,categoria:novoCat,tipo:novoTipo,recorrente:novoRec};
+      }
+      return i;
+    });
+  });
+
+  // Salvar valores/status dos meses editados
   Object.entries(meses).forEach(([k,data])=>{
     const v=parseFloat(data.valor)||0;
     if(!D[k])D[k]=[];
-    if(data.id){
-      const entry=D[k].find(i=>i.id===data.id);
-      if(entry){entry.valor=v;entry.status=data.status;}
-    } else if(v>0){
-      D[k].push({id:uid(),nome:nomeKey,valor:v,categoria:'Outros',tipo,recorrente:tipo==='fixo',status:data.status,obs:'',createdAt:new Date().toISOString()});
-    }
+    const entry=D[k].find(i=>i.nome.trim().toLowerCase()===nomeKeyLow&&i.recorrente===(tipo==='fixo'))||
+                (data.id?D[k].find(i=>i.id===data.id):null);
+    if(entry){entry.valor=v;entry.status=data.status;entry.cod=data.cod||entry.cod||null;}
+    else if(v>0){D[k].push({id:uid(),nome:novoNome,valor:v,categoria:novoCat,tipo:novoTipo,recorrente:novoRec,status:data.status,obs:'',createdAt:new Date().toISOString()});}
   });
   // Salvar PIX e códigos de barras na meta da conta
-  const meta={pix:caState.pix||''};
+  const meta={pix:caState.pix||'',cat:caState.catEdit||''};
   Object.entries(caState.meses).forEach(([k,data])=>{
     if(data.cod||data.url)meta[k]={cod:data.cod||'',url:data.url||''};
   });
@@ -2648,6 +2739,14 @@ function caCopyCod(k){
 
 
 // ====== TELA SALDOS ======
+let saldoCollapsed={renda:false,inicio:false,mes:false,semana:false,desejos:false};
+function togSaldoSection(k){
+  saldoCollapsed[k]=!saldoCollapsed[k];
+  const el=document.getElementById('saldo-det-'+k);
+  const ico=document.getElementById('saldo-ico-'+k);
+  if(el)el.classList.toggle('collapsed',saldoCollapsed[k]);
+  if(ico)ico.textContent=saldoCollapsed[k]?'▸':'▾';
+}
 function rSaldo(){
   const el=document.getElementById('saldo-body');
   if(!el)return;
@@ -2715,18 +2814,24 @@ function rSaldo(){
       <button class="mbtn" onclick="chM(1)">&#8250;</button>
     </div>
 
-    <div class="saldo-section-hdr">&#128176; Entradas</div>
-    <div class="saldo-card" style="border-color:rgba(234,179,8,.2)">
-      <div class="saldo-card-lbl">Total de entradas</div>
-      <div class="saldo-card-val" style="color:var(--gold)">${brl(totalEntradas)}</div>
-      ${rendaRows?`<div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:8px">${rendaRows}</div>`:'<div class="saldo-card-sub">Nenhuma renda cadastrada para este mês</div>'}
+    <div class="saldo-card" style="border-color:rgba(234,179,8,.3)">
+      <div class="saldo-card-toggle" onclick="togSaldoSection('renda')">
+        <div class="saldo-card-lbl">&#128176; ENTRADAS <span id="saldo-ico-renda">▾</span></div>
+        <div class="saldo-card-val" style="color:var(--gold)">${brl(totalEntradas)}</div>
+      </div>
+      <div class="saldo-detail${saldoCollapsed.renda?' collapsed':''}" id="saldo-det-renda" style="max-height:400px">
+        ${rendaRows?`<div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:8px">${rendaRows}</div>`:'<div class="saldo-card-sub">Nenhuma renda cadastrada para este mês</div>'}
+      </div>
     </div>
 
-    <div class="saldo-section-hdr">&#9889; Saídas do início do mês</div>
     <div class="saldo-card" style="border-color:rgba(245,158,11,.2)">
-      <div class="saldo-card-lbl">Total de saídas fixas imediatas</div>
-      <div class="saldo-card-val amber">${brl(saidasInicio)}</div>
-      ${inicioRows?`<div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:8px">${inicioRows}</div>`:'<div class="saldo-card-sub">Nenhuma conta marcada como "início do mês"</div>'}
+      <div class="saldo-card-toggle" onclick="togSaldoSection('inicio')">
+        <div class="saldo-card-lbl">&#9889; SAÍDAS DO INÍCIO <span id="saldo-ico-inicio">▾</span></div>
+        <div class="saldo-card-val amber">${brl(saidasInicio)}</div>
+      </div>
+      <div class="saldo-detail${saldoCollapsed.inicio?' collapsed':''}" id="saldo-det-inicio" style="max-height:800px">
+        ${inicioRows?`<div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:8px">${inicioRows}</div>`:'<div class="saldo-card-sub">Nenhuma conta marcada como início do mês</div>'}
+      </div>
     </div>
 
     <div class="saldo-card" style="border-color:rgba(34,197,94,.15)">
@@ -2735,11 +2840,14 @@ function rSaldo(){
       <div class="saldo-card-sub">${brl(totalEntradas)} − ${brl(saidasInicio)}</div>
     </div>
 
-    <div class="saldo-section-hdr">&#128197; Ao longo do mês</div>
     <div class="saldo-card">
-      <div class="saldo-card-lbl">Saídas ao longo do mês</div>
-      <div class="saldo-card-val amber">${brl(saidasMes)}</div>
-      ${mesRows?`<div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:8px">${mesRows}</div>`:'<div class="saldo-card-sub">Nenhum lançamento ao longo do mês</div>'}
+      <div class="saldo-card-toggle" onclick="togSaldoSection('mes')">
+        <div class="saldo-card-lbl">&#128197; AO LONGO DO MÊS <span id="saldo-ico-mes">▾</span></div>
+        <div class="saldo-card-val amber">${brl(saidasMes)}</div>
+      </div>
+      <div class="saldo-detail${saldoCollapsed.mes?' collapsed':''}" id="saldo-det-mes" style="max-height:1200px">
+        ${mesRows?`<div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:8px">${mesRows}</div>`:'<div class="saldo-card-sub">Nenhum lançamento ao longo do mês</div>'}
+      </div>
     </div>
 
     <div class="saldo-card" style="border-color:rgba(34,197,94,.2)">
@@ -2748,8 +2856,6 @@ function rSaldo(){
       <div class="saldo-card-sub">${brl(totalEntradas)} − ${brl(totalSaidas)}</div>
     </div>
 
-    <div class="saldo-divider"></div>
-
     <div class="saldo-card" style="border-color:rgba(59,130,246,.2)">
       <div class="saldo-card-lbl">Por semana até o fim do mês</div>
       <div class="saldo-card-val ${semanaColor}">${brl(porSemana)}</div>
@@ -2757,11 +2863,175 @@ function rSaldo(){
     </div>
 
     <div class="saldo-card" style="border-color:rgba(168,85,247,.2)">
-      <div class="saldo-card-lbl">Total de desejos pendentes</div>
-      <div class="saldo-card-val purple">${brl(totalDesejos)}</div>
-      <div class="saldo-card-sub">${WL.filter(w=>w.status!=='comprado').length} item${WL.filter(w=>w.status!=='comprado').length!==1?'s':''} na lista</div>
+      <div class="saldo-card-toggle" onclick="togSaldoSection('desejos')">
+        <div class="saldo-card-lbl">&#11088; DESEJOS PENDENTES <span id="saldo-ico-desejos">▾</span></div>
+        <div class="saldo-card-val purple">${brl(totalDesejos)}</div>
+      </div>
+      <div class="saldo-detail${saldoCollapsed.desejos?' collapsed':''}" id="saldo-det-desejos" style="max-height:400px">
+        <div class="saldo-card-sub" style="margin-top:8px">${WL.filter(w=>w.status!=='comprado').length} item${WL.filter(w=>w.status!=='comprado').length!==1?'s':''} na lista</div>
+      </div>
     </div>
   `;
+}
+
+
+// ====== ABA MÊS ======
+let mesCollapsed={}; // {catKey: bool}
+
+function togMesCat(k){
+  mesCollapsed[k]=!mesCollapsed[k];
+  const el=document.getElementById('mes-cat-body-'+k);
+  const ico=document.getElementById('mes-cat-ico-'+k);
+  if(el)el.classList.toggle('collapsed',mesCollapsed[k]);
+  if(ico)ico.textContent=mesCollapsed[k]?'▸':'▾';
+}
+
+function rMes(){
+  const el=document.getElementById('mes-body');
+  if(!el)return;
+  const all=D[cm]||[];
+  let html='';
+
+  // ── RENDA (sempre no topo, separada) ──────────────────────
+  const rendaTotal=RD.reduce((a,r)=>a+Number(r.meses?.[cm]?.valor||0),0);
+  if(RD.length){
+    const rendaKey='_renda';
+    const collapsed=mesCollapsed[rendaKey];
+    let rows='';
+    RD.forEach(r=>{
+      const mes=r.meses?.[cm]||{};
+      const v=Number(mes.valor||0);if(!v)return;
+      const st=mes.status==='recebido'?'recebido':'pendente';
+      rows+=`<div class="mes-item">
+        <div class="mes-item-dot ${st}" onclick="togRd('${r.id}')">${st==='recebido'?'✓':''}</div>
+        <span class="mes-item-nome ${st}" onclick="openCAFromItem('${r.id}')" style="cursor:pointer">${esc(r.nome)}</span>
+        <span class="mes-item-val ${st}">${brl(v)}</span>
+      </div>`;
+    });
+    if(rows){
+      html+=`<div class="mes-section">
+        <div class="mes-sec-hdr" onclick="togMesCat('${rendaKey}')" style="cursor:pointer">
+          <span class="mes-sec-tit renda" style="flex:1">&#128176; Renda <span id="mes-cat-ico-${rendaKey}">${collapsed?'▸':'▾'}</span></span>
+          <span class="mes-sec-tot" style="color:var(--gold)">${brl(rendaTotal)}</span>
+        </div>
+        <div class="saldo-detail${collapsed?' collapsed':''}" id="mes-cat-body-${rendaKey}" style="max-height:600px">${rows}</div>
+      </div>
+      <div class="mes-renda-sep"></div>`;
+    }
+  }
+
+  // ── DESPESAS agrupadas por categoria ─────────────────────
+  // Início do mês
+  const inicioItems=all.filter(i=>i.inicioMes);
+  if(inicioItems.length){
+    const k='_inicio';
+    const collapsed=mesCollapsed[k];
+    const tot=inicioItems.reduce((a,i)=>a+Number(i.valor||0),0);
+    let rows='';
+    inicioItems.forEach(i=>{ rows+=mkMesItem(i); });
+    html+=`<div class="mes-section">
+      <div class="mes-sec-hdr" onclick="togMesCat('${k}')" style="cursor:pointer">
+        <span class="mes-sec-tit inicio" style="flex:1">&#9889; Início do mês <span id="mes-cat-ico-${k}">${collapsed?'▸':'▾'}</span></span>
+        <span class="mes-sec-tot">${brl(tot)}</span>
+      </div>
+      <div class="saldo-detail${collapsed?' collapsed':''}" id="mes-cat-body-${k}" style="max-height:800px">${rows}</div>
+    </div>`;
+  }
+
+  // Demais despesas agrupadas por categoria
+  const outrasItems=all.filter(i=>!i.inicioMes);
+  const cats={};
+  outrasItems.forEach(i=>{
+    const cat=CATS[i.categoria]||i.categoria||'Outros';
+    if(!cats[cat])cats[cat]=[];
+    cats[cat].push(i);
+  });
+  Object.entries(cats).sort(([a],[b])=>a.localeCompare(b,'pt')).forEach(([cat,items])=>{
+    const k='cat_'+cat.toLowerCase().replace(/\s+/g,'_');
+    const collapsed=mesCollapsed[k];
+    const tot=items.reduce((a,i)=>a+Number(i.valor||0),0);
+    let rows='';
+    items.forEach(i=>{ rows+=mkMesItem(i); });
+    html+=`<div class="mes-section">
+      <div class="mes-sec-hdr" onclick="togMesCat('${k}')" style="cursor:pointer">
+        <span class="mes-sec-tit despesas" style="flex:1">${esc(cat)} <span id="mes-cat-ico-${k}">${collapsed?'▸':'▾'}</span></span>
+        <span class="mes-sec-tot">${brl(tot)}</span>
+      </div>
+      <div class="saldo-detail${collapsed?' collapsed':''}" id="mes-cat-body-${k}" style="max-height:1200px">${rows}</div>
+    </div>`;
+  });
+
+  // ── CARTÃO ────────────────────────────────────────────────
+  const cartItems=cardTxns.filter(t=>t.mes===cm);
+  const cartRecItems=cardRec.filter(r=>r.meses?.[cm]?.valor>0);
+  const cartTotal=cartItems.reduce((a,t)=>a+Number(t.valor||0),0)+
+                  cartRecItems.reduce((a,r)=>a+Number(r.meses?.[cm]?.valor||0),0);
+  if(cartItems.length||cartRecItems.length){
+    const k='_cartao';
+    const collapsed=mesCollapsed[k];
+    let rows='';
+    cartRecItems.forEach(r=>{
+      const mes=r.meses[cm];
+      const st=mes.status||'pendente';
+      rows+=`<div class="mes-item">
+        <div class="mes-item-dot ${st}" onclick="anEditCardRec('${r.id}','${cm}')">${st==='pago'?'✓':''}</div>
+        <span class="mes-item-nome ${st}" onclick="anEditCardRec('${r.id}','${cm}')" style="cursor:pointer">${esc(r.nome)}</span>
+        <span class="mes-item-val ${st}">${brl(mes.valor)}</span>
+      </div>`;
+    });
+    cartItems.forEach(t=>{
+      const st=t.status||'pendente';
+      rows+=`<div class="mes-item">
+        <div class="mes-item-dot ${st}" onclick="event.stopPropagation();togCtxSt('${t.id}')">${st==='pago'?'✓':''}</div>
+        <span class="mes-item-nome ${st}" onclick="openCtx('${t.id}')" style="cursor:pointer">${esc(t.nome)}</span>
+        <span class="mes-item-val ${st}">${brl(t.valor)}</span>
+      </div>`;
+    });
+    html+=`<div class="mes-section">
+      <div class="mes-sec-hdr" onclick="togMesCat('${k}')" style="cursor:pointer">
+        <span class="mes-sec-tit cartao" style="flex:1">&#128179; Cartão <span id="mes-cat-ico-${k}">${collapsed?'▸':'▾'}</span></span>
+        <span class="mes-sec-tot">${brl(cartTotal)}</span>
+      </div>
+      <div class="saldo-detail${collapsed?' collapsed':''}" id="mes-cat-body-${k}" style="max-height:1200px">${rows}</div>
+    </div>`;
+  }
+
+  // ── DESEJOS do mês ────────────────────────────────────────
+  const djMes=WL.filter(w=>w.mesPrevisto===cm);
+  if(djMes.length){
+    const k='_desejos';
+    const collapsed=mesCollapsed[k];
+    const tot=djMes.reduce((a,w)=>a+Number(w.preco||0),0);
+    let rows='';
+    djMes.forEach(w=>{
+      const st=w.status==='comprado'?'pago':'desejo';
+      rows+=`<div class="mes-item">
+        <div class="mes-item-dot ${st}" onclick="togDj('${w.id}')">${st==='pago'?'✓':''}</div>
+        <span class="mes-item-nome ${st}" onclick="openDj('${w.id}')" style="cursor:pointer">${esc(w.nome)}</span>
+        <span class="mes-item-val ${st}">${brl(w.preco||0)}</span>
+      </div>`;
+    });
+    html+=`<div class="mes-section">
+      <div class="mes-sec-hdr" onclick="togMesCat('${k}')" style="cursor:pointer">
+        <span class="mes-sec-tit desejos" style="flex:1">&#11088; Desejos <span id="mes-cat-ico-${k}">${collapsed?'▸':'▾'}</span></span>
+        <span class="mes-sec-tot">${brl(tot)}</span>
+      </div>
+      <div class="saldo-detail${collapsed?' collapsed':''}" id="mes-cat-body-${k}" style="max-height:800px">${rows}</div>
+    </div>`;
+  }
+
+  if(!html)html='<div class="empty"><div class="eico">&#128197;</div><p>Nenhum lan\u00e7amento em '+mlbl()+'.</p></div>';
+  el.innerHTML=html;
+}
+
+function mkMesItem(i){
+  const st=i.status==='pago'?'pago':'pendente';
+  const id=i.id;
+  return `<div class="mes-item">
+    <div class="mes-item-dot ${st}" onclick="event.stopPropagation();togD('${id}')">${st==='pago'?'✓':''}</div>
+    <span class="mes-item-nome ${st}" onclick="openCAFromItem('${id}')" style="cursor:pointer">${esc(i.nome)}</span>
+    <span class="mes-item-val ${st}">${brl(i.valor)}</span>
+  </div>`;
 }
 
 // ====== SWIPE TO CHANGE MONTH ======

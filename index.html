@@ -919,6 +919,28 @@ function rFab(){
   }
 }
 
+// Helper: renderiza um item de despesa
+function mkDespItem(i,isInicio){
+  const st=i.status==='pago'?'pago':'pendente';
+  const isSel=selIds.has(i.id);
+  let dot,acts;
+  if(selMode){
+    dot='<div class="sel-dot '+(isSel?'on':'')+'" onclick="event.stopPropagation();togSel(\'' +i.id+ '\')">'+(isSel?'&#10003;':'')+'</div>';
+    acts='';
+  } else {
+    dot='<div class="sdot '+st+'" onclick="event.stopPropagation();togD(\'' +i.id+ '\')">'+(st==='pago'?'&#10003;':'')+'</div>';
+    const yb=i.recorrente?'<button class="icb" onclick="event.stopPropagation();openDan(\'' +i.id+ '\')">&#128197;</button>':'';
+    acts='<button class="icb" onclick="event.stopPropagation();openS(\'' +i.id+ '\')">&#9998;</button>'+yb+'<button class="icb del" onclick="event.stopPropagation();askDel(\'' +i.id+ '\',\'d\')">&#10005;</button>';
+  }
+  const obsHtml=i.obs?'<div class="iobs">'+esc(i.obs)+'</div>':'';
+  const recBdg=i.recorrente?'<span class="bdg rec">Recorrente</span>':'';
+  const extBdg=i.tipo==='extra'?'<span class="bdg ext">Extra</span>':'';
+  const inicioBdg=isInicio?'<span class="bdg" style="background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.2)">In\u00edcio</span>':'';
+  const itemOnclick=selMode?' onclick="togSel(\'' +i.id+ '\')"':' onclick="openS(\'' +i.id+ '\')" style="cursor:pointer"';
+  const attachHtml=i.anexo?'<div style="margin-top:4px"><span class="attach-chip" onclick="event.stopPropagation();viewAttach(\'' +i.id+ '\')">&#128206; '+esc(i.anexo.name)+'</span></div>':'';
+  return '<div class="item '+st+(isSel?' sel-on':'')+(isInicio?' inicio-mes':'')+'"'+itemOnclick+'>'+dot+'<div class="ib"><div class="ir1"><span class="iname '+st+'">'+esc(i.nome)+'</span><span class="ival">'+brl(i.valor)+'</span></div><div class="bdgs">'+recBdg+extBdg+inicioBdg+'</div>'+obsHtml+attachHtml+'</div><div class="iacts">'+acts+'</div></div>';
+}
+
 // ====== RENDER DESPESAS ======
 function rDesp(){
   const dvDespEl=document.getElementById('dv-desp-inject');
@@ -979,38 +1001,18 @@ function rDesp(){
     const totMes=mesItems.reduce((a,i)=>a+Number(i.valor||0),0);
     let h='';
     if(inicioItems.length){
-      h+='<div class="sec-inicio"><div class="sec-inicio-hdr">&#9889; Já sai <span style="font-family:var(--mono);font-weight:600">'+brl(totInicio)+'</span></div>';
-      inicioItems.forEach(i=>{
-        const st=i.status==='pago'?'pago':'pendente';
-        const isSel=selIds.has(i.id);
-        let dot,acts;
-        if(selMode){dot='<div class="sel-dot '+(isSel?'on':'')+'" onclick="event.stopPropagation();togSel(''+i.id+'')">'+(isSel?'&#10003;':'')+'</div>';acts='';}
-        else{dot='<div class="sdot '+st+'" onclick="event.stopPropagation();togD(''+i.id+'')"> '+(st==='pago'?'&#10003;':'')+'</div>';const yb=i.recorrente?'<button class="icb" onclick="event.stopPropagation();openDan(''+i.id+'')">&#128197;</button>':'';acts='<button class="icb" onclick="event.stopPropagation();openS(''+i.id+'')">&#9998;</button>'+yb+'<button class="icb del" onclick="event.stopPropagation();askDel(''+i.id+'','d')">&#10005;</button>';}
-        const attachHtml=i.anexo?'<div style="margin-top:4px"><span class="attach-chip" onclick="event.stopPropagation();viewAttach(''+i.id+'')">&#128206; '+esc(i.anexo.name)+'</span></div>':'';
-        const obsHtml=i.obs?'<div class="iobs">'+esc(i.obs)+'</div>':'';
-        const itemOnclick=selMode?' onclick="togSel(''+i.id+'')"':' onclick="openS(''+i.id+'')" style="cursor:pointer"';
-        h+='<div class="item '+st+(isSel?' sel-on':'')+' inicio-mes"'+itemOnclick+'>'+dot+'<div class="ib"><div class="ir1"><span class="iname '+st+'">'+esc(i.nome)+'</span><span class="ival">'+brl(i.valor)+'</span></div>'+obsHtml+attachHtml+'</div><div class="iacts">'+acts+'</div></div>';
-      });
+      h+='<div class="sec-inicio"><div class="sec-inicio-hdr">&#9889; J\u00e1 sai <span style="font-family:var(--mono);font-weight:600">'+brl(totInicio)+'</span></div>';
+      inicioItems.forEach(i=>{h+=mkDespItem(i,true);});
       h+='</div>';
     }
     if(mesItems.length){
-      h+='<div class="sec-mes-hdr">Ao longo do mês <span style="font-family:var(--mono);font-weight:600;margin-left:6px">'+brl(totMes)+'</span></div>';
+      h+='<div class="sec-mes-hdr">Ao longo do m\u00eas <span style="font-family:var(--mono);font-weight:600;margin-left:6px">'+brl(totMes)+'</span></div>';
       const grp2={};
       mesItems.forEach(i=>{const cc=CATS[i.categoria]||i.categoria||'Outros';if(!grp2[cc])grp2[cc]=[];grp2[cc].push(i)});
       Object.entries(grp2).sort(([a],[b])=>a.localeCompare(b,'pt')).forEach(([cat,items])=>{
         const s=items.reduce((a,i)=>a+Number(i.valor||0),0);
         h+=`<div class="cg"><div class="ch"><span class="cl">${esc(cat)}</span><span class="cln"></span><span class="cs">${brl(s)}</span></div>`;
-        items.forEach(i=>{
-          const st=i.status==='pago'?'pago':'pendente';
-          const isSel=selIds.has(i.id);
-          let dot,acts;
-          if(selMode){dot='<div class="sel-dot '+(isSel?'on':'')+'" onclick="event.stopPropagation();togSel(''+i.id+'')">'+(isSel?'&#10003;':'')+'</div>';acts='';}
-          else{dot='<div class="sdot '+st+'" onclick="event.stopPropagation();togD(''+i.id+'')"> '+(st==='pago'?'&#10003;':'')+'</div>';const yb=i.recorrente?'<button class="icb" onclick="event.stopPropagation();openDan(''+i.id+'')">&#128197;</button>':'';acts='<button class="icb" onclick="event.stopPropagation();openS(''+i.id+'')">&#9998;</button>'+yb+'<button class="icb del" onclick="event.stopPropagation();askDel(''+i.id+'','d')">&#10005;</button>';}
-          const obsHtml=i.obs?'<div class="iobs">'+esc(i.obs)+'</div>':'';
-          const attachHtml=i.anexo?'<div style="margin-top:4px"><span class="attach-chip" onclick="event.stopPropagation();viewAttach(''+i.id+'')">&#128206; '+esc(i.anexo.name)+'</span></div>':'';
-          const itemOnclick=selMode?' onclick="togSel(''+i.id+'')"':' onclick="openS(''+i.id+'')" style="cursor:pointer"';
-          h+='<div class="item '+st+(isSel?' sel-on':'')+'"'+itemOnclick+'>'+dot+'<div class="ib"><div class="ir1"><span class="iname '+st+'">'+esc(i.nome)+'</span><span class="ival">'+brl(i.valor)+'</span></div>'+obsHtml+attachHtml+'</div><div class="iacts">'+acts+'</div></div>';
-        });
+        items.forEach(i=>{h+=mkDespItem(i,false);});
         h+=`</div>`;
       });
     }

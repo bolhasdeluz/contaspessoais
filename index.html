@@ -498,6 +498,12 @@ input[type=number]{-moz-appearance:textfield}
 .imp-nome-input{background:transparent;border:none;border-bottom:1px solid var(--bd2);font-size:12px;color:var(--tx);outline:none;width:100%;min-width:80px}
 .imp-nome-input:focus{border-color:var(--blue)}
 
+
+.imp-dup-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;
+  background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3);
+  border-radius:4px;padding:1px 5px;white-space:nowrap;margin-left:4px}
+.imp-table tr.dup td{background:rgba(245,158,11,.04)}
+
 /* TABBAR */
 .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(7,1fr);height:56px}
 .tabbtn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-family:var(--sans);font-size:10px;font-weight:500;transition:color .15s;padding:0}
@@ -3363,6 +3369,18 @@ function impParsePDF(buffer){
   }).catch(e=>{document.getElementById('imp-status').textContent='Erro ao ler PDF: '+e.message;});
 }
 
+function impCheckDup(row){
+  // Verifica se já existe lançamento no mesmo mês com mesmo valor
+  const mes=row.date||cm;
+  const val=row.valor;
+  if(row.tipo==='renda'){
+    return RD.some(r=>r.meses?.[mes]&&Math.abs(Number(r.meses[mes].valor)-val)<0.01);
+  } else {
+    return (D[mes]||[]).some(i=>Math.abs(Number(i.valor)-val)<0.01&&
+      i.nome.trim().toLowerCase()===row.nome.trim().toLowerCase());
+  }
+}
+
 function impRender(){
   const status=document.getElementById('imp-status');
   const wrap=document.getElementById('imp-table-wrap');
@@ -3373,11 +3391,17 @@ function impRender(){
   actions.style.display='block';
   const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
   const tbody=document.getElementById('imp-tbody');
+  // Marcar duplicatas
+  impRows.forEach(r=>{r.dup=impCheckDup(r);if(r.dup)r.checked=false;});
+
   tbody.innerHTML=impRows.map((r,i)=>`
-    <tr id="imp-row-${i}" class="${r.checked?'':'skip'}">
+    <tr id="imp-row-${i}" class="${r.checked?'':r.dup?'dup skip':'skip'}">
       <td><input type="checkbox" class="imp-chk" ${r.checked?'checked':''} onchange="impTogRow(${i},this.checked)"/></td>
       <td style="white-space:nowrap;color:var(--mut)">${r.date}</td>
-      <td><input class="imp-nome-input" value="${esc(r.nome)}" onchange="impRows[${i}].nome=this.value"/></td>
+      <td>
+        <input class="imp-nome-input" value="${esc(r.nome)}" onchange="impRows[${i}].nome=this.value"/>
+        ${r.dup?'<span class="imp-dup-badge">&#9888; já lançado</span>':''}
+      </td>
       <td class="${r.tipo==='renda'?'imp-val-pos':'imp-val-neg'}">${brl(r.valor)}</td>
       <td><select class="imp-tipo-sel" onchange="impRows[${i}].tipo=this.value;impRecolor(${i})">
         <option value="despesa" ${r.tipo==='despesa'?'selected':''}>&#8595; Despesa</option>
@@ -3395,7 +3419,11 @@ function impTogAll(v){impRows.forEach((r,i)=>{r.checked=v;const el=document.getE
 function impRecolor(i){const r=impRows[i];const td=document.getElementById('imp-row-'+i)?.querySelectorAll('td')[3];if(td){td.className=r.tipo==='renda'?'imp-val-pos':'imp-val-neg';}}
 function impUpdCount(){
   const sel=impRows.filter(r=>r.checked);
-  document.getElementById('imp-count-lbl').textContent=`${sel.length} de ${impRows.length} selecionados`;
+  const dups=impRows.filter(r=>r.dup);
+  const lbl=document.getElementById('imp-count-lbl');
+  let txt=`${sel.length} de ${impRows.length} selecionados`;
+  if(dups.length)txt+=` · <span style="color:var(--amber)">&#9888; ${dups.length} já lançado${dups.length>1?'s':''} (desmarcado${dups.length>1?'s':''})</span>`;
+  lbl.innerHTML=txt;
 }
 
 function impConfirm(){

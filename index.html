@@ -3410,26 +3410,85 @@ function impParsePDF(buffer){
     for(let i=1;i<=pdf.numPages;i++)pages.push(i);
     return Promise.all(pages.map(p=>pdf.getPage(p).then(pg=>pg.getTextContent())));
   }).then(contents=>{
-    const lines=[];
-    contents.forEach(c=>{
-      let line='';
-      c.items.forEach(it=>{if(it.str.trim())line+=it.str+' ';});
-      line.split('\n').forEach(l=>{if(l.trim())lines.push(l.trim());});
+    // Reconstruir linhas agrupando por posição Y (tolerância 3px)
+    const allItems=[];
+    contents.forEach((pg,pi)=>{
+      pg.items.forEach(it=>{
+        if(!it.str.trim())return;
+        // Y invertido no PDF — usar transform[5]
+        allItems.push({str:it.str.trim(), x:it.transform[4], y:Math.round(it.transform[5]/3)*3, page:pi});
+      });
     });
-    // Sicredi: linhas com padrão DD/MM/YYYY DESCRIÇÃO ... VALOR SALDO
+    // Agrupar por (page, y)
+    const rowMap={};
+    allItems.forEach(it=>{
+      const key=`${it.page}_${it.y}`;
+      if(!rowMap[key])rowMap[key]=[];
+      rowMap[key].push(it);
+    });
+    // Ordenar cada linha por X e juntar
+    const lines=Object.values(rowMap)
+      .map(items=>items.sort((a,b)=>a.x-b.x).map(i=>i.str).join(' '))
+      .filter(l=>l.trim());
+
+    // Detectar transações Sicredi:
+    // Padrão: linha começa com DD/MM/YYYY
+    // Valor está na penúltima coluna (antes do Saldo)
     impRows=[];
     lines.forEach(line=>{
-      const m=line.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(.+?)\s+([-\d.,]+)\s+([-\d.,]+)\s*$/);
-      if(!m)return;
-      const [,dd,mm,yyyy,desc,valorRaw]=m;
-      const dateStr=`${yyyy}-${mm}`;
-      const valor=parseFloat(valorRaw.replace(/\./g,'').replace(',','.'))||0;
-      if(!valor||desc.toLowerCase().includes('saldo'))return;
-      impRows.push({date:dateStr,nome:desc.trim(),valor:Math.abs(valor),
-        tipo:valor>0?'renda':'despesa',cat:'Outros',checked:true});
+      // Tentar padrão completo: DATA DESC [DOC] VALOR SALDO
+      const mFull=line.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(.+?)\s+(PIX_\w+|CX\w+)?\s*([-\d.]+,\d{2})\s+([-\d.]+,\d{2})\s*$/);
+      if(mFull){
+        const [,dd,mm,yyyy,desc,,valorRaw]=mFull;
+        const valor=parseFloat(valorRaw.replace(/\./g,'').replace(',','.'))||0;
+        if(!valor)return;
+        impRows.push({
+          date:`${yyyy}-${mm}`,
+          nome:desc.trim(),
+          valor:Math.abs(valor),
+          tipo:valor>0?'renda':'despesa',
+          cat:'Outros',checked:true
+        });
+        return;
+      }
+      // Padrão sem doc: DATA DESC VALOR SALDO
+      const mSimple=line.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(.+?)\s+([-\d.]+,\d{2})\s+([-\d.]+,\d{2})\s*$/);
+      if(mSimple){
+        const [,dd,mm,yyyy,desc,valorRaw]=mSimple;
+        const valor=parseFloat(valorRaw.replace(/\./g,'').replace(',','.'))||0;
+        if(!valor)return;
+        impRows.push({
+          date:`${yyyy}-${mm}`,
+          nome:desc.trim(),
+          valor:Math.abs(valor),
+          tipo:valor>0?'renda':'despesa',
+          cat:'Outros',checked:true
+        });
+      }
     });
+
+    // Fallback: se não achou nada, tentar método simples (texto bruto)
+    if(!impRows.length){
+      const raw=lines.join(' ');
+      const dateMatches=[...raw.matchAll(/(\d{2})\/(\d{2})\/(\d{4})\s+([^0-9]+?)\s+([-\d.]+,\d{2})/g)];
+      dateMatches.forEach(m=>{
+        const [,dd,mm,yyyy,desc,valorRaw]=m;
+        const valor=parseFloat(valorRaw.replace(/\./g,'').replace(',','.'))||0;
+        if(!valor||desc.toLowerCase().includes('saldo'))return;
+        impRows.push({
+          date:`${yyyy}-${mm}`,
+          nome:desc.trim().replace(/\s+/g,' '),
+          valor:Math.abs(valor),
+          tipo:valor>0?'renda':'despesa',
+          cat:'Outros',checked:true
+        });
+      });
+    }
     impRender();
-  }).catch(e=>{document.getElementById('imp-status').textContent='Erro ao ler PDF: '+e.message;});
+  }).catch(e=>{
+    document.getElementById('imp-status').textContent='Erro ao ler PDF: '+e.message;
+    console.error(e);
+  });
 }
 
 function impCheckDup(row){

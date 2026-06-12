@@ -3512,51 +3512,47 @@ function expXLSX(){
 
 
 // ====== IA: CATEGORIZAÇÃO DE EXTRATO ======
+// URL do Worker — configure após o deploy na Cloudflare
+const ABPP_WORKER_URL='https://abpp.SEU-SUBDOMINIO.workers.dev/classify';
+
 async function impClassifyWithAI(){
   if(!impRows.length)return;
-  const cats=Object.values(CATS).join(', ');
-  // Montar lista de transações para o prompt
-  const txList=impRows.map((r,i)=>`${i}|${r.nome}|${r.valor}|${r.tipo}`).join('\n');
-  const prompt=`Você é um assistente de finanças pessoais brasileiro. Analise estas transações bancárias e retorne APENAS um JSON array, sem nenhum texto antes ou depois, sem markdown.
-
-Categorias disponíveis: ${cats}
-
-Para cada transação, retorne:
-- "i": índice (número)
-- "cat": categoria mais adequada da lista acima
-- "tipo": "despesa" ou "renda"
-- "nome": nome limpo e legível em português (sem caps lock, sem código de transação, máx 30 chars)
-
-Transações (formato: índice|nome|valor|tipo_detectado):
-${txList}
-
-Retorne SOMENTE o JSON array. Exemplo: [{"i":0,"cat":"Moradia","tipo":"despesa","nome":"Netflix"}]`;
-
-  // URL do Cloudflare Worker — troque pela URL do seu Worker após o deploy
-  const WORKER_URL='https://abpp.SEU-SUBDOMINIO.workers.dev/classify';
-  const resp=await fetch(WORKER_URL,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      transactions:impRows.map((r,i)=>({i,nome:r.nome,valor:r.valor,tipo:r.tipo})),
-      categories:Object.values(CATS)
-    })
-  });
-  if(!resp.ok)throw new Error('Worker error '+resp.status);
-  const data=await resp.json();
-  const suggestions=data.suggestions||[];
-  // Aplicar sugestões
-  suggestions.forEach(s=>{
-    if(s.i>=0&&s.i<impRows.length){
-      if(s.cat&&CATS[s.cat])impRows[s.i].cat=s.cat;
-      else{// tentar match parcial
-        const found=Object.keys(CATS).find(k=>CATS[k].toLowerCase()===String(s.cat).toLowerCase());
+  // Pular se Worker não foi configurado
+  if(ABPP_WORKER_URL.includes('SEU-SUBDOMINIO')){
+    console.warn('Worker URL não configurada — pulando IA');
+    return;
+  }
+  // Timeout de 10s
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),10000);
+  try{
+    const resp=await fetch(ABPP_WORKER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      signal:controller.signal,
+      body:JSON.stringify({
+        transactions:impRows.map((r,i)=>({i,nome:r.nome,valor:r.valor,tipo:r.tipo})),
+        categories:Object.values(CATS)
+      })
+    });
+    clearTimeout(timer);
+    if(!resp.ok)throw new Error('Worker error '+resp.status);
+    const data=await resp.json();
+    const suggestions=data.suggestions||[];
+    suggestions.forEach(s=>{
+      if(s.i>=0&&s.i<impRows.length){
+        const found=Object.keys(CATS).find(k=>
+          CATS[k].toLowerCase()===String(s.cat||'').toLowerCase()||k===s.cat);
         if(found)impRows[s.i].cat=found;
+        if(s.tipo==='renda'||s.tipo==='despesa')impRows[s.i].tipo=s.tipo;
+        if(s.nome&&s.nome.trim())impRows[s.i].nome=s.nome.trim();
       }
-      if(s.tipo==='renda'||s.tipo==='despesa')impRows[s.i].tipo=s.tipo;
-      if(s.nome&&s.nome.trim())impRows[s.i].nome=s.nome.trim();
-    }
-  });
+    });
+  } catch(e){
+    clearTimeout(timer);
+    console.warn('IA indisponível:',e.message);
+    // Segue sem IA — não bloqueia o fluxo
+  }
 }
 
 // ====== SWIPE TO CHANGE MONTH ======

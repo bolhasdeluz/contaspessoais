@@ -631,6 +631,27 @@ select option{background:#1c1c1c}
 .sel-dot.on{background:var(--red);border-color:var(--red);color:#fff}
 .item.sel-on{border-left:3px solid var(--red)!important;background:rgba(239,68,68,.04)}
 .sel-footer{position:fixed;bottom:60px;left:0;right:0;z-index:150;display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 16px;background:rgba(10,10,10,.96);backdrop-filter:blur(12px);border-top:1px solid var(--bd);animation:fu .2s ease}
+/* Modo compacto para a área de upload */
+.imp-drop.compact {
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.imp-drop.compact .imp-drop-ico {
+    font-size: 20px;
+    margin-bottom: 0;
+}
+.imp-drop.compact .imp-drop-sub {
+    display: none;
+}
+/* Faz a lista de itens preencher o resto da tela */
+.imp-cards {
+    max-height: none !important;
+    flex: 1;
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>

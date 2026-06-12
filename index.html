@@ -3532,21 +3532,19 @@ ${txList}
 
 Retorne SOMENTE o JSON array. Exemplo: [{"i":0,"cat":"Moradia","tipo":"despesa","nome":"Netflix"}]`;
 
-  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+  // URL do Cloudflare Worker — troque pela URL do seu Worker após o deploy
+  const WORKER_URL='https://abpp.SEU-SUBDOMINIO.workers.dev/classify';
+  const resp=await fetch(WORKER_URL,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      model:'claude-sonnet-4-6',
-      max_tokens:1000,
-      messages:[{role:'user',content:prompt}]
+      transactions:impRows.map((r,i)=>({i,nome:r.nome,valor:r.valor,tipo:r.tipo})),
+      categories:Object.values(CATS)
     })
   });
-  if(!resp.ok)throw new Error('API error '+resp.status);
+  if(!resp.ok)throw new Error('Worker error '+resp.status);
   const data=await resp.json();
-  const text=data.content?.find(b=>b.type==='text')?.text||'[]';
-  // Limpar possíveis backticks
-  const clean=text.replace(/```json?/g,'').replace(/```/g,'').trim();
-  const suggestions=JSON.parse(clean);
+  const suggestions=data.suggestions||[];
   // Aplicar sugestões
   suggestions.forEach(s=>{
     if(s.i>=0&&s.i<impRows.length){

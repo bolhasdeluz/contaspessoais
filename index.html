@@ -518,6 +518,20 @@ input[type=number]{-moz-appearance:textfield}
 .imp-ai-lbl{font-size:12px;color:var(--mut)}
 .imp-ai-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:rgba(59,130,246,.1);color:var(--blue);border:1px solid rgba(59,130,246,.25);border-radius:4px;padding:2px 6px}
 
+
+/* Barra de progresso importação */
+.imp-progress{margin-bottom:12px}
+.imp-progress-bar-wrap{height:4px;background:var(--bd2);border-radius:2px;overflow:hidden;margin-bottom:8px}
+.imp-progress-bar{height:100%;border-radius:2px;background:var(--blue);transition:width .4s ease;width:0%}
+.imp-progress-steps{display:flex;justify-content:space-between}
+.imp-progress-step{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.imp-progress-step-dot{width:8px;height:8px;border-radius:50%;background:var(--bd2);transition:all .3s}
+.imp-progress-step-dot.done{background:var(--green)}
+.imp-progress-step-dot.active{background:var(--blue);box-shadow:0 0 6px rgba(59,130,246,.5)}
+.imp-progress-step-lbl{font-size:9px;color:var(--mut);text-align:center;transition:color .3s}
+.imp-progress-step-lbl.active{color:var(--blue);font-weight:600}
+.imp-progress-step-lbl.done{color:var(--green)}
+
 /* TABBAR */
 .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(7,1fr);height:56px}
 .tabbtn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-family:var(--sans);font-size:10px;font-weight:500;transition:color .15s;padding:0}
@@ -772,6 +786,27 @@ select option{background:#1c1c1c}
       <div class="imp-drop-sub">.xlsx (Conta Max) &nbsp;·&nbsp; .pdf (Sicredi)</div>
     </div>
     <input type="file" id="imp-file-input" accept=".xlsx,.xls,.pdf" style="display:none" onchange="impOnFile(this.files[0])"/>
+    <div id="imp-progress" style="display:none" class="imp-progress">
+      <div class="imp-progress-bar-wrap"><div class="imp-progress-bar" id="imp-pbar"></div></div>
+      <div class="imp-progress-steps">
+        <div class="imp-progress-step">
+          <div class="imp-progress-step-dot" id="imp-step-dot-0"></div>
+          <span class="imp-progress-step-lbl" id="imp-step-lbl-0">Lendo</span>
+        </div>
+        <div class="imp-progress-step">
+          <div class="imp-progress-step-dot" id="imp-step-dot-1"></div>
+          <span class="imp-progress-step-lbl" id="imp-step-lbl-1">Processando</span>
+        </div>
+        <div class="imp-progress-step">
+          <div class="imp-progress-step-dot" id="imp-step-dot-2"></div>
+          <span class="imp-progress-step-lbl" id="imp-step-lbl-2">IA</span>
+        </div>
+        <div class="imp-progress-step">
+          <div class="imp-progress-step-dot" id="imp-step-dot-3"></div>
+          <span class="imp-progress-step-lbl" id="imp-step-lbl-3">Pronto</span>
+        </div>
+      </div>
+    </div>
     <div id="imp-status" class="imp-status"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 6px" id="imp-sel-bar" style="display:none">
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);cursor:pointer">
@@ -3291,8 +3326,10 @@ function impOnFile(file){
   if(!file)return;
   const ext=file.name.split('.').pop().toLowerCase();
   const status=document.getElementById('imp-status');
-  status.textContent='Lendo arquivo...';
-  document.getElementById('imp-table-wrap').style.display='none';
+  status.textContent='';
+  impResetProgress();
+  impSetStep(0);
+  document.getElementById('imp-cards-wrap').style.display='none';
   document.getElementById('imp-actions').style.display='none';
   if(ext==='xlsx'||ext==='xls'){
     const reader=new FileReader();
@@ -3553,6 +3590,30 @@ async function impClassifyWithAI(){
     console.warn('IA indisponível:',e.message);
     // Segue sem IA — não bloqueia o fluxo
   }
+}
+
+
+// Barra de progresso da importação
+// steps: 0=Lendo, 1=Processando, 2=IA, 3=Pronto
+function impSetStep(step){
+  const pct=[10,40,75,100];
+  const bar=document.getElementById('imp-pbar');
+  const prog=document.getElementById('imp-progress');
+  if(prog)prog.style.display='block';
+  if(bar)bar.style.width=pct[step]+'%';
+  for(let i=0;i<4;i++){
+    const dot=document.getElementById('imp-step-dot-'+i);
+    const lbl=document.getElementById('imp-step-lbl-'+i);
+    if(!dot||!lbl)continue;
+    dot.className='imp-progress-step-dot'+(i<step?' done':i===step?' active':'');
+    lbl.className='imp-progress-step-lbl'+(i<step?' done':i===step?' active':'');
+  }
+}
+function impResetProgress(){
+  const prog=document.getElementById('imp-progress');
+  if(prog)prog.style.display='none';
+  const bar=document.getElementById('imp-pbar');
+  if(bar)bar.style.width='0%';
 }
 
 // ====== SWIPE TO CHANGE MONTH ======

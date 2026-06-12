@@ -3503,35 +3503,57 @@ function impCheckDup(row){
 
 function impRender(){
   const status=document.getElementById('imp-status');
-  const wrap=document.getElementById('imp-table-wrap');
+  // CORREÇÃO: Usar o ID do container de cards atualizado no HTML
+  const wrap=document.getElementById('imp-cards-wrap');
   const actions=document.getElementById('imp-actions');
+  
   if(!impRows.length){status.textContent='Nenhuma transação encontrada.';return;}
   status.textContent='';
-  wrap.style.display='block';
+  wrap.style.display='flex';
   actions.style.display='block';
+  
   const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
-  const tbody=document.getElementById('imp-tbody');
+  
   // Marcar duplicatas
   impRows.forEach(r=>{r.dup=impCheckDup(r);if(r.dup)r.checked=false;});
 
-  tbody.innerHTML=impRows.map((r,i)=>`
-    <tr id="imp-row-${i}" class="${r.checked?'':r.dup?'dup skip':'skip'}">
-      <td><input type="checkbox" class="imp-chk" ${r.checked?'checked':''} onchange="impTogRow(${i},this.checked)"/></td>
-      <td style="white-space:nowrap;color:var(--mut)">${r.date}</td>
-      <td>
-        <input class="imp-nome-input" value="${esc(r.nome)}" onchange="impRows[${i}].nome=this.value"/>
-        ${r.dup?'<span class="imp-dup-badge">&#9888; já lançado</span>':''}
-      </td>
-      <td class="${r.tipo==='renda'?'imp-val-pos':'imp-val-neg'}">${brl(r.valor)}</td>
-      <td><select class="imp-tipo-sel" onchange="impRows[${i}].tipo=this.value;impRecolor(${i})">
-        <option value="despesa" ${r.tipo==='despesa'?'selected':''}>&#8595; Despesa</option>
-        <option value="renda" ${r.tipo==='renda'?'selected':''}>&#8593; Renda</option>
-      </select></td>
-      <td><select class="imp-cat-sel" onchange="impRows[${i}].cat=this.value">
-        ${catOpts.replace(`value="${r.cat}"`,`value="${r.cat}" selected`)}
-      </select></td>
-    </tr>`).join('');
+  // CORREÇÃO: Renderizar usando as classes do CSS de cards em vez de <tr>/<td>
+  wrap.innerHTML=impRows.map((r,i)=>`
+    <div class="imp-card ${r.checked?'':r.dup?'dup skip':'skip'}" id="imp-row-${i}">
+      <div class="imp-card-top">
+        <input type="checkbox" class="imp-card-chk" ${r.checked?'checked':''} onchange="impTogRow(${i},this.checked)"/>
+        <div class="imp-card-info">
+          <input class="imp-nome-edit" value="${esc(r.nome)}" onchange="impRows[${i}].nome=this.value"/>
+          <div class="imp-card-date">${r.date} ${r.dup?'<span class="imp-dup-badge">&#9888; já lançado</span>':''}</div>
+        </div>
+        <div class="imp-card-val ${r.tipo==='renda'?'pos':'neg'}">${brl(r.valor)}</div>
+      </div>
+      <div class="imp-card-bottom">
+        <button class="imp-tipo-btn ${r.tipo==='despesa'?'on desp':''}" onclick="impSetTipo(${i},'despesa')">&#8595; Despesa</button>
+        <button class="imp-tipo-btn ${r.tipo==='renda'?'on renda':''}" onclick="impSetTipo(${i},'renda')">&#8593; Renda</button>
+        <select class="imp-cat-sel" onchange="impRows[${i}].cat=this.value">
+          ${catOpts.replace(`value="${r.cat}"`,`value="${r.cat}" selected`)}
+        </select>
+      </div>
+    </div>`).join('');
+    
   impUpdCount();
+}
+
+// NOVA FUNÇÃO: Atualiza o tipo visualmente na interface dos cards sem precisar recarregar tudo
+function impSetTipo(i, tipo){
+  impRows[i].tipo = tipo;
+  const card = document.getElementById('imp-row-' + i);
+  if(!card) return;
+  
+  const val = card.querySelector('.imp-card-val');
+  if(val) val.className = 'imp-card-val ' + (tipo === 'renda' ? 'pos' : 'neg');
+  
+  const btns = card.querySelectorAll('.imp-tipo-btn');
+  if(btns.length >= 2){
+    btns[0].className = 'imp-tipo-btn ' + (tipo === 'despesa' ? 'on desp' : '');
+    btns[1].className = 'imp-tipo-btn ' + (tipo === 'renda' ? 'on renda' : '');
+  }
 }
 
 function impTogRow(i,v){impRows[i].checked=v;const el=document.getElementById('imp-row-'+i);if(el){el.classList.toggle('skip',!v);}impUpdCount();}

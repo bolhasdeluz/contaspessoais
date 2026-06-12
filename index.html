@@ -3350,8 +3350,13 @@ function impOnFile(file){
   status.textContent='';
   impResetProgress();
   impSetStep(0);
+  
+  // Restaura o tamanho da área de upload
+  document.getElementById('imp-drop').classList.remove('compact');
+  
   document.getElementById('imp-cards-wrap').style.display='none';
   document.getElementById('imp-actions').style.display='none';
+  
   if(ext==='xlsx'||ext==='xls'){
     const reader=new FileReader();
     reader.onload=e=>impParseXLSX(e.target.result);
@@ -3524,7 +3529,6 @@ function impCheckDup(row){
 
 function impRender(){
   const status=document.getElementById('imp-status');
-  // CORREÇÃO: Usar o ID do container de cards atualizado no HTML
   const wrap=document.getElementById('imp-cards-wrap');
   const actions=document.getElementById('imp-actions');
   
@@ -3533,12 +3537,13 @@ function impRender(){
   wrap.style.display='flex';
   actions.style.display='block';
   
+  // Deixa a área de upload pequenininha para liberar espaço para a lista
+  document.getElementById('imp-drop').classList.add('compact');
+  
   const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
   
-  // Marcar duplicatas
   impRows.forEach(r=>{r.dup=impCheckDup(r);if(r.dup)r.checked=false;});
 
-  // CORREÇÃO: Renderizar usando as classes do CSS de cards em vez de <tr>/<td>
   wrap.innerHTML=impRows.map((r,i)=>`
     <div class="imp-card ${r.checked?'':r.dup?'dup skip':'skip'}" id="imp-row-${i}">
       <div class="imp-card-top">
@@ -3595,7 +3600,6 @@ function impConfirm(){
   sel.forEach(r=>{
     const mes=r.date||cm;
     if(r.tipo==='renda'){
-      // Criar fonte de renda ou adicionar ao mês
       let fonte=RD.find(x=>x.nome.trim().toLowerCase()===r.nome.toLowerCase());
       if(!fonte){fonte={id:uid(),nome:r.nome,recorrente:false,meses:{}};RD.push(fonte);}
       if(!fonte.meses)fonte.meses={};
@@ -3611,14 +3615,19 @@ function impConfirm(){
   fClose('ov-imp');
   rContent();
   impRows=[];
-  // Toast
+  
+  // Limpa a tela de importação para a próxima vez
+  document.getElementById('imp-drop').classList.remove('compact');
+  document.getElementById('imp-cards-wrap').style.display='none';
+  document.getElementById('imp-actions').style.display='none';
+  
   const t=document.createElement('div');
   t.textContent=`✓ ${added} transações importadas`;
   t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-size:12px;font-weight:600;padding:8px 18px;border-radius:20px;z-index:999;pointer-events:none';
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2500);
 }
-
+  
 // ====== EXPORTAR ======
 function expJSON(){
   const data={D,cards,cardRec,cardTxns,VR,RD,WL,DV,CO,CATS,exportedAt:new Date().toISOString()};

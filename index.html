@@ -498,11 +498,34 @@ input[type=number]{-moz-appearance:textfield}
 .imp-tipo-btn{flex:1;padding:5px 0;border-radius:var(--r);font-size:11px;font-weight:600;border:1px solid var(--bd2);background:var(--sur);color:var(--mut);cursor:pointer;transition:all .12s;text-align:center}
 .imp-tipo-btn.on.renda{background:rgba(234,179,8,.12);color:var(--gold);border-color:rgba(234,179,8,.3)}
 .imp-tipo-btn.on.desp{background:rgba(245,158,11,.1);color:var(--amber);border-color:rgba(245,158,11,.25)}
+.imp-tipo-btn.on.transf{background:rgba(99,102,241,.1);color:#818cf8;border-color:rgba(99,102,241,.25)}
+.imp-card.transf{opacity:.55;border-style:dashed}
 .imp-cat-sel{flex:1;background:var(--sur);border:1px solid var(--bd2);border-radius:var(--r);font-size:11px;color:var(--dim);padding:5px 6px;outline:none}
 .imp-nome-edit{width:100%;background:transparent;border:none;border-bottom:1px solid var(--bd2);font-size:13px;font-weight:600;color:var(--tx);outline:none;padding:2px 0;margin-bottom:4px}
 .imp-nome-edit:focus{border-color:var(--blue)}
 .imp-chk{width:15px;height:15px;accent-color:var(--blue);cursor:pointer}
 .imp-status{font-size:12px;color:var(--mut);padding:8px 0;text-align:center}
+/* Modo compacto para a área de upload */
+.imp-drop.compact {
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.imp-drop.compact .imp-drop-ico {
+    font-size: 20px;
+    margin-bottom: 0;
+}
+.imp-drop.compact .imp-drop-sub {
+    display: none;
+}
+/* Faz a lista de itens preencher o resto da tela */
+.imp-cards {
+    max-height: none !important;
+    flex: 1;
+}
 
 
 .imp-dup-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;
@@ -631,27 +654,6 @@ select option{background:#1c1c1c}
 .sel-dot.on{background:var(--red);border-color:var(--red);color:#fff}
 .item.sel-on{border-left:3px solid var(--red)!important;background:rgba(239,68,68,.04)}
 .sel-footer{position:fixed;bottom:60px;left:0;right:0;z-index:150;display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 16px;background:rgba(10,10,10,.96);backdrop-filter:blur(12px);border-top:1px solid var(--bd);animation:fu .2s ease}
-/* Modo compacto para a área de upload */
-.imp-drop.compact {
-    padding: 8px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 8px;
-}
-.imp-drop.compact .imp-drop-ico {
-    font-size: 20px;
-    margin-bottom: 0;
-}
-.imp-drop.compact .imp-drop-sub {
-    display: none;
-}
-/* Faz a lista de itens preencher o resto da tela */
-.imp-cards {
-    max-height: none !important;
-    flex: 1;
-}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -3009,13 +3011,13 @@ function rSaldo(){
   },0);
 
   // Saídas início do mês (inicioMes=true)
-  const saidasInicio=all.filter(i=>i.inicioMes).reduce((a,i)=>a+Number(i.valor||0),0);
+  const saidasInicio=all.filter(i=>i.inicioMes&&i.tipo!=='transferencia').reduce((a,i)=>a+Number(i.valor||0),0);
 
   // Saldo após início do mês
   const saldoAposInicio=totalEntradas-saidasInicio;
 
   // Saídas ao longo do mês (não inicio)
-  const saidasMes=all.filter(i=>!i.inicioMes).reduce((a,i)=>a+Number(i.valor||0),0);
+  const saidasMes=all.filter(i=>!i.inicioMes&&i.tipo!=='transferencia').reduce((a,i)=>a+Number(i.valor||0),0);
 
   // Saldo atual (todas as saídas)
   const totalSaidas=saidasInicio+saidasMes;
@@ -3041,13 +3043,13 @@ function rSaldo(){
   }).join('');
 
   // Detalhes saídas início
-  const inicioRows=all.filter(i=>i.inicioMes).map(i=>{
+  const inicioRows=all.filter(i=>i.inicioMes&&i.tipo!=='transferencia').map(i=>{
     const st=i.status==='pago'?'✓':'⏳';
     return `<div class="saldo-row"><span class="saldo-row-lbl">${st} ${esc(i.nome)}</span><span class="saldo-row-val" style="color:var(--amber)">${brl(i.valor)}</span></div>`;
   }).join('');
 
   // Detalhes saídas ao longo
-  const mesRows=all.filter(i=>!i.inicioMes).map(i=>{
+  const mesRows=all.filter(i=>!i.inicioMes&&i.tipo!=='transferencia').map(i=>{
     const st=i.status==='pago'?'✓':'⏳';
     return `<div class="saldo-row"><span class="saldo-row-lbl">${st} ${esc(i.nome)}</span><span class="saldo-row-val">${brl(i.valor)}</span></div>`;
   }).join('');
@@ -3188,7 +3190,7 @@ function rMes(){
   }
 
   // Demais despesas agrupadas por categoria
-  const outrasItems=all.filter(i=>!i.inicioMes);
+  const outrasItems=all.filter(i=>!i.inicioMes&&i.tipo!=='transferencia');
   const cats={};
   outrasItems.forEach(i=>{
     const cat=CATS[i.categoria]||i.categoria||'Outros';
@@ -3269,7 +3271,30 @@ function rMes(){
     </div>`;
   }
 
-  if(!html)html='<div class="empty"><div class="eico">&#128197;</div><p>Nenhum lan\u00e7amento em '+mlbl()+'.</p></div>';
+  // ── TRANSFERÊNCIAS (não contam no saldo) ──────────────────
+  const transfItems=all.filter(i=>i.tipo==='transferencia');
+  if(transfItems.length){
+    const k='_transf';
+    const collapsed=mesCollapsed[k]!==false; // começa colapsado
+    const tot=transfItems.reduce((a,i)=>a+Number(i.valor||0),0);
+    let rows='';
+    transfItems.forEach(i=>{
+      rows+=`<div class="mes-item" style="opacity:.6">
+        <div class="mes-item-dot" style="border-color:#818cf8;color:#818cf8;font-size:10px">&#8652;</div>
+        <span class="mes-item-nome" style="color:var(--mut)">${esc(i.nome)}</span>
+        <span style="font-family:var(--mono);font-size:13px;font-weight:600;color:#818cf8;flex-shrink:0">${brl(i.valor)}</span>
+      </div>`;
+    });
+    html+=`<div class="mes-section">
+      <div class="mes-sec-hdr" onclick="togMesCat('${k}')" style="cursor:pointer">
+        <span class="mes-sec-tit" style="flex:1;color:#818cf8">&#8652; Transferências <span style="font-size:9px;color:var(--mut)">(não contam no saldo)</span> <span id="mes-cat-ico-${k}">${collapsed?'▸':'▾'}</span></span>
+        <span class="mes-sec-tot" style="color:#818cf8">${brl(tot)}</span>
+      </div>
+      <div class="saldo-detail${collapsed?' collapsed':''}" id="mes-cat-body-${k}" style="max-height:800px">${rows}</div>
+    </div>`;
+  }
+
+  if(!html)html='<div class="empty"><div class="eico">&#128197;</div><p>Nenhum lançamento em '+mlbl()+'.</p></div>';
   el.innerHTML=html;
 }
 
@@ -3350,13 +3375,10 @@ function impOnFile(file){
   status.textContent='';
   impResetProgress();
   impSetStep(0);
-  
   // Restaura o tamanho da área de upload
   document.getElementById('imp-drop').classList.remove('compact');
-  
   document.getElementById('imp-cards-wrap').style.display='none';
   document.getElementById('imp-actions').style.display='none';
-  
   if(ext==='xlsx'||ext==='xls'){
     const reader=new FileReader();
     reader.onload=e=>impParseXLSX(e.target.result);
@@ -3417,9 +3439,12 @@ function impParseXLSX(buffer){
         else{const m2=dStr.match(/(\d{4})-(\d{2})/);if(m2)dateStr=`${m2[1]}-${m2[2]}`;}
         if(!dateStr)dateStr=cm;
       }
+      // Detectar transferências entre contas próprias
+      const nomeL=nome.toLowerCase();
+      const isSelfTransfer=nomeL.includes('anna paula')&&(nomeL.includes('gomes')||nomeL.includes('paula'));
+      const tipoDetect=isSelfTransfer?'transferencia':(valor>0||op.toLowerCase().includes('entrada')?'renda':'despesa');
       impRows.push({date:dateStr,nome:nome.trim(),valor:Math.abs(valor),
-        tipo:valor>0||op.toLowerCase().includes('entrada')?'renda':'despesa',
-        cat:'Outros',checked:true,dup:false});
+        tipo:tipoDetect,cat:'Outros',checked:!isSelfTransfer,dup:false});
     });
     impRender();
   }catch(e){document.getElementById('imp-status').textContent='Erro ao ler Excel: '+e.message;console.error(e);}
@@ -3468,12 +3493,14 @@ function impParsePDF(buffer){
         const [,dd,mm,yyyy,desc,,valorRaw]=mFull;
         const valor=parseFloat(valorRaw.replace(/\./g,'').replace(',','.'))||0;
         if(!valor)return;
+        const descL1=desc.toLowerCase();
+        const isSelf1=descL1.includes('anna paula')&&(descL1.includes('gomes')||descL1.includes('paula'));
         impRows.push({
           date:`${yyyy}-${mm}`,
           nome:desc.trim(),
           valor:Math.abs(valor),
-          tipo:valor>0?'renda':'despesa',
-          cat:'Outros',checked:true
+          tipo:isSelf1?'transferencia':(valor>0?'renda':'despesa'),
+          cat:'Outros',checked:!isSelf1
         });
         return;
       }
@@ -3483,12 +3510,14 @@ function impParsePDF(buffer){
         const [,dd,mm,yyyy,desc,valorRaw]=mSimple;
         const valor=parseFloat(valorRaw.replace(/\./g,'').replace(',','.'))||0;
         if(!valor)return;
+        const descL2=desc.toLowerCase();
+        const isSelf2=descL2.includes('anna paula')&&(descL2.includes('gomes')||descL2.includes('paula'));
         impRows.push({
           date:`${yyyy}-${mm}`,
           nome:desc.trim(),
           valor:Math.abs(valor),
-          tipo:valor>0?'renda':'despesa',
-          cat:'Outros',checked:true
+          tipo:isSelf2?'transferencia':(valor>0?'renda':'despesa'),
+          cat:'Outros',checked:!isSelf2
         });
       }
     });
@@ -3529,62 +3558,54 @@ function impCheckDup(row){
 
 function impRender(){
   const status=document.getElementById('imp-status');
-  const wrap=document.getElementById('imp-cards-wrap');
+  const wrap=document.getElementById('imp-table-wrap');
   const actions=document.getElementById('imp-actions');
-  
   if(!impRows.length){status.textContent='Nenhuma transação encontrada.';return;}
   status.textContent='';
-  wrap.style.display='flex';
+  wrap.style.display='block';
   actions.style.display='block';
-  
-  // Deixa a área de upload pequenininha para liberar espaço para a lista
-  document.getElementById('imp-drop').classList.add('compact');
-  
   const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
-  
+  const tbody=document.getElementById('imp-tbody');
+  // Marcar duplicatas
   impRows.forEach(r=>{r.dup=impCheckDup(r);if(r.dup)r.checked=false;});
 
-  wrap.innerHTML=impRows.map((r,i)=>`
-    <div class="imp-card ${r.checked?'':r.dup?'dup skip':'skip'}" id="imp-row-${i}">
-      <div class="imp-card-top">
-        <input type="checkbox" class="imp-card-chk" ${r.checked?'checked':''} onchange="impTogRow(${i},this.checked)"/>
-        <div class="imp-card-info">
-          <input class="imp-nome-edit" value="${esc(r.nome)}" onchange="impRows[${i}].nome=this.value"/>
-          <div class="imp-card-date">${r.date} ${r.dup?'<span class="imp-dup-badge">&#9888; já lançado</span>':''}</div>
-        </div>
-        <div class="imp-card-val ${r.tipo==='renda'?'pos':'neg'}">${brl(r.valor)}</div>
-      </div>
-      <div class="imp-card-bottom">
-        <button class="imp-tipo-btn ${r.tipo==='despesa'?'on desp':''}" onclick="impSetTipo(${i},'despesa')">&#8595; Despesa</button>
-        <button class="imp-tipo-btn ${r.tipo==='renda'?'on renda':''}" onclick="impSetTipo(${i},'renda')">&#8593; Renda</button>
-        <select class="imp-cat-sel" onchange="impRows[${i}].cat=this.value">
-          ${catOpts.replace(`value="${r.cat}"`,`value="${r.cat}" selected`)}
-        </select>
-      </div>
-    </div>`).join('');
-    
+  tbody.innerHTML=impRows.map((r,i)=>`
+    <tr id="imp-row-${i}" class="${r.checked?'':r.dup?'dup skip':'skip'}">
+      <td><input type="checkbox" class="imp-chk" ${r.checked?'checked':''} onchange="impTogRow(${i},this.checked)"/></td>
+      <td style="white-space:nowrap;color:var(--mut)">${r.date}</td>
+      <td>
+        <input class="imp-nome-input" value="${esc(r.nome)}" onchange="impRows[${i}].nome=this.value"/>
+        ${r.dup?'<span class="imp-dup-badge">&#9888; já lançado</span>':''}
+      </td>
+      <td class="${r.tipo==='renda'?'imp-val-pos':'imp-val-neg'}">${brl(r.valor)}</td>
+      <td><select class="imp-tipo-sel" onchange="impRows[${i}].tipo=this.value;impRecolor(${i})">
+        <option value="despesa" ${r.tipo==='despesa'?'selected':''}>&#8595; Despesa</option>
+        <option value="renda" ${r.tipo==='renda'?'selected':''}>&#8593; Renda</option>
+      </select></td>
+      <td><select class="imp-cat-sel" onchange="impRows[${i}].cat=this.value">
+        ${catOpts.replace(`value="${r.cat}"`,`value="${r.cat}" selected`)}
+      </select></td>
+    </tr>`).join('');
   impUpdCount();
-}
-
-// NOVA FUNÇÃO: Atualiza o tipo visualmente na interface dos cards sem precisar recarregar tudo
-function impSetTipo(i, tipo){
-  impRows[i].tipo = tipo;
-  const card = document.getElementById('imp-row-' + i);
-  if(!card) return;
-  
-  const val = card.querySelector('.imp-card-val');
-  if(val) val.className = 'imp-card-val ' + (tipo === 'renda' ? 'pos' : 'neg');
-  
-  const btns = card.querySelectorAll('.imp-tipo-btn');
-  if(btns.length >= 2){
-    btns[0].className = 'imp-tipo-btn ' + (tipo === 'despesa' ? 'on desp' : '');
-    btns[1].className = 'imp-tipo-btn ' + (tipo === 'renda' ? 'on renda' : '');
-  }
 }
 
 function impTogRow(i,v){impRows[i].checked=v;const el=document.getElementById('imp-row-'+i);if(el){el.classList.toggle('skip',!v);}impUpdCount();}
 function impTogAll(v){impRows.forEach((r,i)=>{r.checked=v;const el=document.getElementById('imp-row-'+i);if(el)el.classList.toggle('skip',!v);const chk=el?.querySelector('.imp-card-chk');if(chk)chk.checked=v;});impUpdCount();}
 
+function impSetTipo(i, tipo){
+  impRows[i].tipo = tipo;
+  const card = document.getElementById('imp-row-' + i);
+  if(!card) return;
+  const val = card.querySelector('.imp-card-val');
+  if(val) val.className = 'imp-card-val ' + (tipo === 'renda' ? 'pos' : tipo === 'transferencia' ? '' : 'neg');
+  card.classList.toggle('transf', tipo === 'transferencia');
+  const btns = card.querySelectorAll('.imp-tipo-btn');
+  if(btns.length >= 3){
+    btns[0].className = 'imp-tipo-btn ' + (tipo === 'despesa' ? 'on desp' : '');
+    btns[1].className = 'imp-tipo-btn ' + (tipo === 'renda' ? 'on renda' : '');
+    btns[2].className = 'imp-tipo-btn ' + (tipo === 'transferencia' ? 'on transf' : '');
+  }
+}
 function impUpdCount(){
   const sel=impRows.filter(r=>r.checked);
   const dups=impRows.filter(r=>r.dup);
@@ -3600,6 +3621,7 @@ function impConfirm(){
   sel.forEach(r=>{
     const mes=r.date||cm;
     if(r.tipo==='renda'){
+      // Criar fonte de renda ou adicionar ao mês
       let fonte=RD.find(x=>x.nome.trim().toLowerCase()===r.nome.toLowerCase());
       if(!fonte){fonte={id:uid(),nome:r.nome,recorrente:false,meses:{}};RD.push(fonte);}
       if(!fonte.meses)fonte.meses={};
@@ -3615,19 +3637,18 @@ function impConfirm(){
   fClose('ov-imp');
   rContent();
   impRows=[];
-  
   // Limpa a tela de importação para a próxima vez
   document.getElementById('imp-drop').classList.remove('compact');
   document.getElementById('imp-cards-wrap').style.display='none';
   document.getElementById('imp-actions').style.display='none';
-  
+  // Toast
   const t=document.createElement('div');
   t.textContent=`✓ ${added} transações importadas`;
   t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-size:12px;font-weight:600;padding:8px 18px;border-radius:20px;z-index:999;pointer-events:none';
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2500);
 }
-  
+
 // ====== EXPORTAR ======
 function expJSON(){
   const data={D,cards,cardRec,cardTxns,VR,RD,WL,DV,CO,CATS,exportedAt:new Date().toISOString()};

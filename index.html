@@ -1130,7 +1130,6 @@ function seedMemoria2026(){
   addFixo('Claude (Anthropic)',110,'Assinaturas','evitar créditos avulsos (IOF)');
   addFixo('Apple iCloud',66.90,'Assinaturas','');
   addFixo('Nuvem Intelbras',83.70,'Assinaturas','3 planos — consolidar em 1');
-  addFixo('Odoo (ERP)',72,'Assinaturas','ERP do terreiro');
   addFixo('Cesta Relacionamento (Sicredi)',15,'Tarifas bancárias','cancelável, ainda ativa');
   addFixo('Seguros Premiáveis (Inter)',25,'Tarifas bancárias','cancelável, ainda ativa');
 
@@ -1149,6 +1148,19 @@ function seedMemoria2026(){
 
   setls('abpp_seed_memoria_2026','1');
   saveAll();
+}
+
+// Odoo (ERP) foi desativado — remove a conta fixa em todos os meses onde já tiver sido semeada/lançada.
+function patchOdooDesativado(){
+  if(ls('abpp_patch_odoo_off'))return;
+  let changed=false;
+  Object.keys(D).forEach(mk=>{
+    const before=D[mk].length;
+    D[mk]=D[mk].filter(i=>i.nome.trim().toLowerCase()!=='odoo (erp)');
+    if(D[mk].length!==before)changed=true;
+  });
+  setls('abpp_patch_odoo_off','1');
+  if(changed)saveAll();
 }
 
 // Regras de categorização automática por pessoa/comerciante/palavra-chave conhecidos (memória financeira).
@@ -3863,6 +3875,7 @@ document.addEventListener('touchend',e=>{
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 seedMemoria2026();
+patchOdooDesativado();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>

@@ -1056,8 +1056,9 @@ select option{background:#1c1c1c}
 
 <script>
 // ====== CONSTANTS ======
-const CATS_DEFAULT={Moradia:'Moradia',Alimentação:'Alimentação',Transporte:'Transporte',Saúde:'Saúde',Educação:'Educação',Lazer:'Lazer',Serviços:'Serviços',Assinaturas:'Assinaturas',Outros:'Outros'};
-let CATS=JSON.parse(ls('abpp_cats')||'null')||{...CATS_DEFAULT};
+const CATS_DEFAULT={Aluguel:'Aluguel',Luz:'Luz',Água:'Água',Gás:'Gás','Internet/Celular':'Internet/Celular',Mercado:'Mercado','Mercado via app':'Mercado via app',Delivery:'Delivery',Moradia:'Moradia',Alimentação:'Alimentação',Transporte:'Transporte',Pet:'Pet',Farmácia:'Farmácia','Restaurantes/Lanches':'Restaurantes/Lanches',Beleza:'Beleza',Vestuário:'Vestuário',Saúde:'Saúde',Educação:'Educação',Lazer:'Lazer',Serviços:'Serviços','Serviços do terreiro':'Serviços do terreiro','Faxina/Marmitas':'Faxina/Marmitas',Assinaturas:'Assinaturas','Parcelados/BNPL':'Parcelados/BNPL','Dívida/Crédito rotativo':'Dívida/Crédito rotativo','Tarifas bancárias':'Tarifas bancárias','Pix para pessoas':'Pix para pessoas','Transferência interna':'Transferência interna','Reserva/Poupança':'Reserva/Poupança',Outros:'Outros'};
+// Mescla com o que já está salvo: novas categorias entram, edições/categorias próprias do usuário se mantêm.
+let CATS={...CATS_DEFAULT,...(JSON.parse(ls('abpp_cats')||'null')||{})};
 const MPT=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const MFL=['Janeiro','Fevereiro','Mar\u00e7o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
@@ -1105,6 +1106,90 @@ function saveAll(){
 // Migração legada de renda
 if(!RD.length){['abpp_fontes','abpp_income','abpp_rendas'].forEach(k=>{if(!RD.length){try{const p=JSON.parse(ls(k)||'[]');if(p.length){RD=p;saveAll();}}catch(e){}}})}
 function uid(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36)}
+
+// ====== SEED CONHECIMENTO — pessoas, comerciantes e contas fixas conhecidas ======
+// Base: memória financeira registrada em ago/2026. Roda uma única vez (flag abpp_seed_memoria_2026).
+function seedMemoria2026(){
+  if(ls('abpp_seed_memoria_2026'))return;
+  if(!D[cm])D[cm]=[];
+  const exFixo=D[cm].map(i=>i.nome.trim().toLowerCase());
+  const addFixo=(nome,valor,categoria,obs)=>{
+    if(exFixo.includes(nome.trim().toLowerCase()))return;
+    D[cm].push({id:uid(),nome,valor,categoria,tipo:'fixo',recorrente:true,status:'pendente',obs:obs||'',createdAt:new Date().toISOString()});
+    exFixo.push(nome.trim().toLowerCase());
+  };
+  addFixo('Aluguel terreiro',1000,'Aluguel','');
+  addFixo('Alarme',200,'Serviços do terreiro','');
+  addFixo('Luz terreiro',80,'Luz','faixa observada: R$ 80-120');
+  addFixo('Água terreiro (DMAE)',40,'Água','');
+  addFixo('IPTU terreiro',60,'Serviços do terreiro','paga de 2 em 2 meses');
+  addFixo('Luz casa',375,'Luz','faixa observada: R$ 375-395');
+  addFixo('Gás',130,'Gás','faixa observada: R$ 130-180 — aparece como "Débito Convênios X155"');
+  addFixo('Vivo',186,'Internet/Celular','celular pessoal + parte da internet');
+  addFixo('Claro',215,'Internet/Celular','inclui internet do terreiro');
+  addFixo('Claude (Anthropic)',110,'Assinaturas','evitar créditos avulsos (IOF)');
+  addFixo('Apple iCloud',66.90,'Assinaturas','');
+  addFixo('Nuvem Intelbras',83.70,'Assinaturas','3 planos — consolidar em 1');
+  addFixo('Odoo (ERP)',72,'Assinaturas','ERP do terreiro');
+  addFixo('Cesta Relacionamento (Sicredi)',15,'Tarifas bancárias','cancelável, ainda ativa');
+  addFixo('Seguros Premiáveis (Inter)',25,'Tarifas bancárias','cancelável, ainda ativa');
+
+  const exDv=DV.map(d=>d.nome.trim().toLowerCase());
+  const addDv=(nome,credor,valorTotal,valorParcela,totalParcelas,mesInicio,obs)=>{
+    if(exDv.includes(nome.trim().toLowerCase()))return;
+    const novo={id:uid(),nome,credor,valorTotal,valorParcela,totalParcelas,mesInicio,obs,createdAt:new Date().toISOString(),meses:{}};
+    novo.meses[cm]={ativa:true,valor:valorParcela,status:'pendente'};
+    DV.push(novo);
+  };
+  addDv('Blipay','Blipay',220,0,1,cm,'Saldo restante ~R$ 220, previsão de quitar set/out 2026 — valor da parcela mensal não confirmado, ajustar quando souber.');
+  addDv('Facio','Facio',330,0,1,cm,'Saldo restante ~R$ 330, previsão de quitar dez/2026 — valor da parcela mensal não confirmado, ajustar quando souber.');
+  addDv('Ferragem','Ferragem',413,0,1,cm,'Saldo restante ~R$ 413 — sem prazo definido no registro, confirmar.');
+  addDv('Banco do Brasil (PagueVeloz)','Banco do Brasil',Math.round(56.85*24*100)/100,56.85,24,'2025-12','Renegociação repassada pela PagueVeloz — parcela 9/24 em jul/2026, até nov/2027. Não é BNPL solto.');
+  addDv('Jumbo (obra)','Jumbo',175*6,175,6,'2026-07','Parcelamento da obra — parcela 2/6 em jul/2026, até dez/2026.');
+
+  setls('abpp_seed_memoria_2026','1');
+  saveAll();
+}
+
+// Regras de categorização automática por pessoa/comerciante/palavra-chave conhecidos (memória financeira).
+const AUTO_CAT_RULES=[
+  {re:/anna paula (gomes|paula)/,cat:'Transferência interna',tipo:'transferencia'},
+  {re:/\bceee\b/,cat:'Luz'},
+  {re:/\bdmae\b/,cat:'Água'},
+  {re:/x155|d[ée]bito conv[êe]nios/,cat:'Gás'},
+  {re:/saldo compartilhado|\bsoma\b/,cat:'Reserva/Poupança'},
+  {re:/diego santos do canto/,cat:'Serviços do terreiro'},
+  {re:/fernanda boiani/,cat:'Serviços do terreiro'},
+  {re:/nl mendes/,cat:'Serviços do terreiro'},
+  {re:/m[ãa]e oxum/,cat:'Serviços do terreiro'},
+  {re:/sonia regina batistell/,cat:'Aluguel'},
+  {re:/nascente distribuidora/,cat:'Água'},
+  {re:/bruna alexandra/,cat:'Beleza'},
+  {re:/\byasmim\b/,cat:'Faxina/Marmitas'},
+  {re:/\bemily\b/,cat:'Pet'},
+  {re:/viviane dias do rousar/,cat:'Pix para pessoas'},
+  {re:/\bkoin\b/,cat:'Parcelados/BNPL'},
+  {re:/pagaleve|blipay|\bfacio\b|magalupay|\bvindi\b/,cat:'Parcelados/BNPL'},
+  {re:/pagueveloz/,cat:'Dívida/Crédito rotativo'},
+  {re:/\bebanx\b/,cat:'Assinaturas'},
+  {re:/\bvivo\b/,cat:'Internet/Celular'},
+  {re:/\bclaro\b/,cat:'Internet/Celular'},
+  {re:/companhia zaffari|\bzaffari\b/,cat:'Mercado'},
+  {re:/center shop/,cat:'Mercado'},
+  {re:/cestto protasio|cestto prot[áa]sio/,cat:'Mercado'},
+  {re:/\blahude\b/,cat:'Mercado'},
+  {re:/adhomemarket|adhome ?market|\badhome\b/,cat:'Mercado'},
+  {re:/\bbistek\b|\bcarrefour\b/,cat:'Mercado'},
+];
+function autoCategorize(nomeRaw,valor){
+  const n=String(nomeRaw||'').toLowerCase();
+  if(n.includes('ifood')){
+    if(/pague depois|\bkoin\b/.test(n))return{cat:'Parcelados/BNPL'};
+    return{cat:Math.abs(valor)>100?'Mercado via app':'Delivery'};
+  }
+  for(const r of AUTO_CAT_RULES){if(r.re.test(n))return{cat:r.cat,tipo:r.tipo}}
+  return null;
+}
 function brl(v){return'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function ym(y,m){return`${y}-${String(m).padStart(2,'0')}`}
@@ -3439,12 +3524,12 @@ function impParseXLSX(buffer){
         else{const m2=dStr.match(/(\d{4})-(\d{2})/);if(m2)dateStr=`${m2[1]}-${m2[2]}`;}
         if(!dateStr)dateStr=cm;
       }
-      // Detectar transferências entre contas próprias
-      const nomeL=nome.toLowerCase();
-      const isSelfTransfer=nomeL.includes('anna paula')&&(nomeL.includes('gomes')||nomeL.includes('paula'));
+      // Categorização automática (pessoas/comerciantes conhecidos) + detecção de transferência entre contas próprias
+      const auto=autoCategorize(nome,valor);
+      const isSelfTransfer=auto?.tipo==='transferencia';
       const tipoDetect=isSelfTransfer?'transferencia':(valor>0||op.toLowerCase().includes('entrada')?'renda':'despesa');
       impRows.push({date:dateStr,nome:nome.trim(),valor:Math.abs(valor),
-        tipo:tipoDetect,cat:'Outros',checked:!isSelfTransfer,dup:false});
+        tipo:tipoDetect,cat:auto?.cat||'Outros',checked:!isSelfTransfer,dup:false});
     });
     impRender();
   }catch(e){document.getElementById('imp-status').textContent='Erro ao ler Excel: '+e.message;console.error(e);}
@@ -3493,14 +3578,14 @@ function impParsePDF(buffer){
         const [,dd,mm,yyyy,desc,,valorRaw]=mFull;
         const valor=parseFloat(valorRaw.replace(/\./g,'').replace(',','.'))||0;
         if(!valor)return;
-        const descL1=desc.toLowerCase();
-        const isSelf1=descL1.includes('anna paula')&&(descL1.includes('gomes')||descL1.includes('paula'));
+        const auto1=autoCategorize(desc,valor);
+        const isSelf1=auto1?.tipo==='transferencia';
         impRows.push({
           date:`${yyyy}-${mm}`,
           nome:desc.trim(),
           valor:Math.abs(valor),
           tipo:isSelf1?'transferencia':(valor>0?'renda':'despesa'),
-          cat:'Outros',checked:!isSelf1
+          cat:auto1?.cat||'Outros',checked:!isSelf1
         });
         return;
       }
@@ -3510,14 +3595,14 @@ function impParsePDF(buffer){
         const [,dd,mm,yyyy,desc,valorRaw]=mSimple;
         const valor=parseFloat(valorRaw.replace(/\./g,'').replace(',','.'))||0;
         if(!valor)return;
-        const descL2=desc.toLowerCase();
-        const isSelf2=descL2.includes('anna paula')&&(descL2.includes('gomes')||descL2.includes('paula'));
+        const auto2=autoCategorize(desc,valor);
+        const isSelf2=auto2?.tipo==='transferencia';
         impRows.push({
           date:`${yyyy}-${mm}`,
           nome:desc.trim(),
           valor:Math.abs(valor),
           tipo:isSelf2?'transferencia':(valor>0?'renda':'despesa'),
-          cat:'Outros',checked:!isSelf2
+          cat:auto2?.cat||'Outros',checked:!isSelf2
         });
       }
     });
@@ -3530,12 +3615,13 @@ function impParsePDF(buffer){
         const [,dd,mm,yyyy,desc,valorRaw]=m;
         const valor=parseFloat(valorRaw.replace(/\./g,'').replace(',','.'))||0;
         if(!valor||desc.toLowerCase().includes('saldo'))return;
+        const auto3=autoCategorize(desc,valor);
         impRows.push({
           date:`${yyyy}-${mm}`,
           nome:desc.trim().replace(/\s+/g,' '),
           valor:Math.abs(valor),
-          tipo:valor>0?'renda':'despesa',
-          cat:'Outros',checked:true
+          tipo:auto3?.tipo==='transferencia'?'transferencia':(valor>0?'renda':'despesa'),
+          cat:auto3?.cat||'Outros',checked:auto3?.tipo!=='transferencia'
         });
       });
     }
@@ -3776,6 +3862,7 @@ document.addEventListener('touchend',e=>{
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
+seedMemoria2026();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>

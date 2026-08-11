@@ -94,6 +94,14 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
 .bdg.rec{background:var(--bld);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
 .bdg.ext{background:var(--prd);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
 .bdg.cc{background:var(--tld);color:var(--teal);border:1px solid rgba(20,184,166,.2)}
+.bdg.conf{background:var(--ad);color:var(--amber);border:1px solid rgba(245,158,11,.35)}
+.conf-banner{margin:0 16px 10px;background:var(--ad);border:1px solid rgba(245,158,11,.4);border-radius:var(--r);overflow:hidden}
+.conf-banner:empty{display:none;margin:0}
+.conf-head{padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--amber);text-transform:uppercase}
+.conf-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-top:1px solid rgba(245,158,11,.2);transition:background .15s}
+.conf-row:hover{background:rgba(245,158,11,.1)}
+.conf-nome{font-size:13px;color:var(--tx);font-weight:500}
+.conf-mes{font-family:var(--mono);font-size:10px;color:var(--amber);white-space:nowrap}
 .bdg.mk{background:var(--gld);color:var(--gold);border:1px solid rgba(234,179,8,.2)}
 .bdg.vr{background:var(--gd);color:var(--green);border:1px solid rgba(34,197,94,.2)}
 .bdg.dj{background:var(--prd);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
@@ -673,6 +681,7 @@ select option{background:#1c1c1c}
     </div>
   </div>
   <div class="summ" id="summ"></div>
+  <div class="conf-banner" id="conf-banner"></div>
   <div class="frow" id="frow"></div>
 </header>
 
@@ -1163,6 +1172,24 @@ function patchOdooDesativado(){
   if(changed)saveAll();
 }
 
+// Lançamentos de set/2026 com valor ainda não confirmado — entram marcados para aparecer no banner "Conferir valores".
+function seedConferirSet2026(){
+  if(ls('abpp_seed_conferir_set2026'))return;
+  const mes='2026-09';
+  if(!D[mes])D[mes]=[];
+  const ex=D[mes].map(i=>i.nome.trim().toLowerCase());
+  const add=(nome,categoria,tipo,obs)=>{
+    if(ex.includes(nome.trim().toLowerCase()))return;
+    D[mes].push({id:uid(),nome,valor:0,categoria,tipo,recorrente:tipo==='fixo',status:'pendente',obs:obs||'',conferir:true,createdAt:new Date().toISOString()});
+    ex.push(nome.trim().toLowerCase());
+  };
+  add('Passagem Osório — Carol','Transporte','extra','Valor a confirmar.');
+  add('Óculos da Gabi','Saúde','fixo','Parcela — vai seguir por alguns meses, quantidade ainda não confirmada. Valor a confirmar.');
+  add('Tambor — Tassiana','Serviços do terreiro','fixo','Parcela do tambor — tem mais parcelas além desta. Valor a confirmar.');
+  setls('abpp_seed_conferir_set2026','1');
+  saveAll();
+}
+
 // Regras de categorização automática por pessoa/comerciante/palavra-chave conhecidos (memória financeira).
 const AUTO_CAT_RULES=[
   {re:/anna paula (gomes|paula)/,cat:'Transferência interna',tipo:'transferencia'},
@@ -1414,9 +1441,10 @@ function mkDespItem(i,isInicio){
   const recBdg=i.recorrente?'<span class="bdg rec">Recorrente</span>':'';
   const extBdg=i.tipo==='extra'?'<span class="bdg ext">Extra</span>':'';
   const inicioBdg=isInicio?'<span class="bdg" style="background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.2)">Início</span>':'';
+  const confBdg=i.conferir?'<span class="bdg conf">&#9888; Conferir valor</span>':'';
   const attachHtml=i.anexo?`<div style="margin-top:4px"><span class="attach-chip" onclick="event.stopPropagation();viewAttach('${id}')">&#128206; ${esc(i.anexo.name)}</span></div>`:'';
   const itemClick=selMode?`onclick="togSel('${id}')"`:` onclick="openS('${id}')" style="cursor:pointer"`;
-  return `<div class="item ${st}${isSel?' sel-on':''}${isInicio?' inicio-mes':''}" ${itemClick}>${dot}<div class="ib"><div class="ir1"><span class="iname ${st}">${esc(i.nome)}</span><span class="ival">${brl(i.valor)}</span></div><div class="bdgs">${recBdg}${extBdg}${inicioBdg}</div>${obsHtml}${attachHtml}</div><div class="iacts">${acts}</div></div>`;
+  return `<div class="item ${st}${isSel?' sel-on':''}${isInicio?' inicio-mes':''}" ${itemClick}>${dot}<div class="ib"><div class="ir1"><span class="iname ${st}">${esc(i.nome)}</span><span class="ival">${brl(i.valor)}</span></div><div class="bdgs">${recBdg}${extBdg}${inicioBdg}${confBdg}</div>${obsHtml}${attachHtml}</div><div class="iacts">${acts}</div></div>`;
 }
 
 // ====== RENDER DESPESAS ======
@@ -1517,11 +1545,12 @@ function rDesp(){
       const obsHtml=i.obs?'<div class="iobs">'+esc(i.obs)+'</div>':'';
       const recBdg=i.recorrente?'<span class="bdg rec">Recorrente</span>':'';
       const extBdg=i.tipo==='extra'?'<span class="bdg ext">Extra</span>':'';
+      const confBdg=i.conferir?'<span class="bdg conf">&#9888; Conferir valor</span>':'';
       const itemOnclick=selMode?' onclick="togSel(\''+i.id+'\')"':'';
       h+='<div class="item '+st+(isSel?' sel-on':'')+'"'+itemOnclick+'>'
         +dot
         +'<div class="ib"><div class="ir1"><span class="iname '+st+'">'+esc(i.nome)+'</span><span class="ival">'+brl(i.valor)+'</span></div>'
-        +'<div class="bdgs">'+recBdg+extBdg+'</div>'
+        +'<div class="bdgs">'+recBdg+extBdg+confBdg+'</div>'
         +obsHtml
         +'</div><div class="iacts">'+acts+'</div></div>';
     });
@@ -1915,8 +1944,26 @@ function svDivida(){
 }
 
 // ====== MASTER RENDER ======
+// ====== BANNER "CONFERIR VALORES" (itens sinalizados como valor não confirmado, em qualquer mês) ======
+function mesLbl(mesKey){const[y,m]=mesKey.split('-').map(Number);return MFL[m-1]+'/'+y}
+function rConferir(){
+  const el=document.getElementById('conf-banner');
+  if(!el)return;
+  const rows=[];
+  Object.keys(D).sort().forEach(mes=>{(D[mes]||[]).forEach(i=>{if(i.conferir)rows.push({...i,mes})})});
+  if(!rows.length){el.innerHTML='';return}
+  el.innerHTML='<div class="conf-head">&#9888;&#65039; '+rows.length+(rows.length>1?' lançamentos pra conferir o valor':' lançamento pra conferir o valor')+'</div>'
+    +rows.map(r=>'<div class="conf-row" onclick="conferirGoto(\''+r.id+'\',\''+r.mes+'\')"><span class="conf-nome">'+esc(r.nome)+'</span><span class="conf-mes">'+mesLbl(r.mes)+'</span></div>').join('');
+}
+function conferirGoto(id,mes){
+  cm=mes;
+  document.getElementById('mlabel').textContent=mlbl();
+  setTab('desp');
+  openS(id);
+}
+
 function rContent(){
-  rSumm();rFrow();
+  rSumm();rFrow();rConferir();
   if(tab==='saldo')rSaldo();
   else if(tab==='mes')rMes();
   else if(tab==='desp')rDesp();
@@ -2039,7 +2086,7 @@ function svSingle(){
   const val=parseFloat(document.getElementById('s-vl').value)||0,cat=document.getElementById('s-ct').value,st=document.getElementById('s-st').value,obs=document.getElementById('s-ob').value.trim();
   const inicioMes=document.getElementById('s-inicio').checked;
   if(!D[cm])D[cm]=[];
-  if(eId){const i=D[cm].find(x=>x.id===eId);if(i)Object.assign(i,{nome,valor:val,categoria:cat,tipo:cTipo,recorrente:cTipo==='fixo',status:st,obs,inicioMes,anexo:sAttachData||i.anexo||null})}
+  if(eId){const i=D[cm].find(x=>x.id===eId);if(i)Object.assign(i,{nome,valor:val,categoria:cat,tipo:cTipo,recorrente:cTipo==='fixo',status:st,obs,inicioMes,anexo:sAttachData||i.anexo||null,conferir:false})}
   else D[cm].push({id:uid(),nome,valor:val,categoria:cat,tipo:cTipo,recorrente:cTipo==='fixo',status:st,obs,inicioMes,anexo:sAttachData||null,createdAt:new Date().toISOString()});
   saveAll();fClose('ov-s');rContent();
 }
@@ -3876,6 +3923,7 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 
 seedMemoria2026();
 patchOdooDesativado();
+seedConferirSet2026();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>

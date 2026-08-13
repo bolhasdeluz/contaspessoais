@@ -1963,9 +1963,11 @@ function conferirGoto(id,mes){
 }
 
 function rContent(){
-  // Renderiza a aba primeiro: é ela que "semeia" (seedD/seedRD/seedCardRec) os itens
-  // recorrentes do mês. Rodar o resumo antes disso mostrava total incompleto na
-  // primeira vez que se entrava num mês novo.
+  // Semeia os recorrentes do mês (contas fixas, renda, cartão) ANTES de qualquer
+  // renderização — antes isso só rodava dentro da aba dona (rDesp/rRend/rCart), então
+  // outras abas (Saldos, Anual...) mostravam o mês novo incompleto até você abrir
+  // Despesas/Renda/Cartões pelo menos uma vez nele.
+  seedD();seedRD();seedCardRec();
   if(tab==='saldo')rSaldo();
   else if(tab==='mes')rMes();
   else if(tab==='desp')rDesp();

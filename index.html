@@ -1190,6 +1190,24 @@ function seedConferirSet2026(){
   saveAll();
 }
 
+// Stephanie (remoção de tatuagem): sessão de agosto paga atrasada em setembro + a de
+// setembro, que já entra como fixa recorrente (vai seguir por um tempo, sem fim definido).
+function seedStephanieSet2026(){
+  if(ls('abpp_seed_stephanie_set2026'))return;
+  const mes='2026-09';
+  if(!D[mes])D[mes]=[];
+  const ex=D[mes].map(i=>i.nome.trim().toLowerCase());
+  const add=(nome,valor,categoria,tipo,obs)=>{
+    if(ex.includes(nome.trim().toLowerCase()))return;
+    D[mes].push({id:uid(),nome,valor,categoria,tipo,recorrente:tipo==='fixo',status:'pendente',obs:obs||'',createdAt:new Date().toISOString()});
+    ex.push(nome.trim().toLowerCase());
+  };
+  add('Stephanie — remoção de tatuagem (atrasado ago/26)',150,'Beleza','extra','Sessão feita em agosto/2026, paga atrasada em setembro.');
+  add('Stephanie — remoção de tatuagem',150,'Beleza','fixo','Sessão de setembro/2026 em diante — segue fixa por um tempo, quantidade de meses ainda não confirmada.');
+  setls('abpp_seed_stephanie_set2026','1');
+  saveAll();
+}
+
 // Regras de categorização automática por pessoa/comerciante/palavra-chave conhecidos (memória financeira).
 const AUTO_CAT_RULES=[
   {re:/anna paula (gomes|paula)/,cat:'Transferência interna',tipo:'transferencia'},
@@ -3929,6 +3947,7 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 seedMemoria2026();
 patchOdooDesativado();
 seedConferirSet2026();
+seedStephanieSet2026();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>

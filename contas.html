@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contas</title>
+<style>
+  :root{
+    --paper: #FAF9F4;
+    --line: #DCD9CC;
+    --ink: #202A44;
+    --ink-soft: #5B6478;
+    --gold: #A8791E;
+    --gold-soft: #F1E6CC;
+    --red: #A5382C;
+    --red-soft: #F5E1DD;
+    --navy-soft: #E4E8F1;
+    --green: #3C6E4F;
+    --green-soft: #E1EEE3;
+    --card: #FFFFFF;
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: 'Iowan Old Style','Georgia',serif;
+    background:
+      repeating-linear-gradient(var(--paper), var(--paper) 30px, var(--line) 31px);
+    color: var(--ink);
+    padding: 0 0 60px 0;
+    min-height:100vh;
+  }
+  .spine{
+    position:fixed;
+    top:0; left:0; bottom:0;
+    width:22px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    gap:26px;
+    padding-top:40px;
+    z-index:0;
+  }
+  .spine span{
+    width:12px;height:12px;border-radius:50%;
+    background:var(--paper);
+    border:2px solid #B9B4A2;
+  }
+  .wrap{
+    position:relative;
+    z-index:1;
+    max-width:640px;
+    margin:0 auto;
+    padding: 22px 18px 0 34px;
+  }
+  h1{
+    font-size: 1.7rem;
+    margin: 4px 0 2px 0;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  .sub{
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-bottom: 18px;
+  }
+  .summary{
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+    border-left: 4px solid var(--ink);
+    margin-bottom: 22px;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .summary-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding: 5px 0;
+  }
+  .summary-row .label{ font-size:0.85rem; color:var(--ink-soft); }
+  .summary-row .value{ font-size:1.05rem; font-weight:600; font-variant-numeric: tabular-nums; }
+  .summary-row.total{ border-top:1px solid var(--line); margin-top:6px; padding-top:10px; }
+  .summary-row.total .value{ font-size:1.35rem; }
+  .value.pos{ color: var(--green); }
+  .value.neg{ color: var(--red); }
+  .saldo-input{
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 1.05rem;
+    font-weight:600;
+    border: none;
+    border-bottom: 2px solid var(--ink);
+    background: transparent;
+    width: 130px;
+    text-align:right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .saldo-input:focus{ outline:none; border-color: var(--gold); }
+
+  .section{ margin-bottom: 26px; }
+  .section-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom: 10px;
+  }
+  .section-header h2{
+    font-size: 1.05rem;
+    margin:0;
+    font-weight:600;
+  }
+  .dot{ width:9px;height:9px;border-radius:50%; }
+  .dot.casa{ background:var(--ink); }
+  .dot.terreiro{ background:var(--gold); }
+  .dot.dividas{ background:var(--red); }
+
+  .conta{
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+    font-family: system-ui, -apple-system, sans-serif;
+    transition: opacity 0.2s;
+  }
+  .conta.paga{ opacity: 0.5; }
+  .conta-top{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .conta-top input[type=checkbox]{
+    width:20px;height:20px;
+    flex-shrink:0;
+    accent-color: var(--ink);
+  }
+  .conta-nome{
+    flex:1;
+    border:none;
+    background:transparent;
+    font-size:1rem;
+    font-weight:600;
+    color:var(--ink);
+    font-family: inherit;
+    padding:2px 0;
+    min-width:0;
+  }
+  .conta-nome:focus{ outline:none; border-bottom:1px solid var(--gold); }
+  .conta-valor-wrap{
+    display:flex;
+    align-items:center;
+    gap:2px;
+    flex-shrink:0;
+  }
+  .conta-valor-wrap span{ font-size:0.85rem; color:var(--ink-soft); }
+  .conta-valor{
+    width:70px;
+    border:none;
+    background:transparent;
+    font-size:1rem;
+    font-weight:600;
+    text-align:right;
+    color:var(--ink);
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+  }
+  .conta-valor:focus{ outline:none; border-bottom:1px solid var(--gold); }
+  .conta-bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:8px;
+    padding-left:30px;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .venc-wrap{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:0.78rem;
+    color:var(--ink-soft);
+  }
+  .venc-wrap input[type=date]{
+    border:none;
+    background: var(--navy-soft);
+    border-radius:6px;
+    padding:3px 6px;
+    font-family: inherit;
+    font-size:0.78rem;
+    color: var(--ink);
+  }
+  .row-actions{
+    display:flex;
+    gap:6px;
+    align-items:center;
+  }
+  .btn-pago{
+    font-size:0.75rem;
+    padding:4px 9px;
+    border-radius:20px;
+    border:1px solid var(--green);
+    color:var(--green);
+    background:transparent;
+    cursor:pointer;
+    font-family: inherit;
+  }
+  .btn-pago.on{ background:var(--green); color:#fff; }
+  .btn-del{
+    background:none;
+    border:none;
+    color: var(--ink-soft);
+    font-size:1.1rem;
+    cursor:pointer;
+    padding:2px 6px;
+    line-height:1;
+  }
+  .add-btn{
+    display:block;
+    width:100%;
+    text-align:left;
+    background:none;
+    border: 1.5px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    color: var(--ink-soft);
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size:0.9rem;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  .add-btn:hover{ border-color: var(--gold); color: var(--gold); }
+  .save-note{
+    text-align:center;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size:0.72rem;
+    color: var(--ink-soft);
+    opacity:0;
+    transition:opacity 0.3s;
+    margin-top:10px;
+  }
+  .save-note.show{ opacity:0.7; }
+</style>
+</head>
+<body>
+<div class="spine" id="spine"></div>
+<div class="wrap">
+  <h1>Contas</h1>
+  <div class="sub">Marque o que vai pagar e veja quanto sobra</div>
+
+  <div class="summary">
+    <div class="summary-row">
+      <span class="label">Saldo disponível</span>
+      <input class="saldo-input" id="saldoInput" inputmode="decimal" value="0,00">
+    </div>
+    <div class="summary-row">
+      <span class="label">Marcado pra pagar agora</span>
+      <span class="value neg" id="totalMarcado">R$ 0,00</span>
+    </div>
+    <div class="summary-row total">
+      <span class="label">Sobra depois</span>
+      <span class="value" id="sobra">R$ 0,00</span>
+    </div>
+  </div>
+
+  <div id="sections"></div>
+
+  <div class="save-note" id="saveNote">salvo</div>
+</div>
+
+<script>
+const STORAGE_KEY = 'contas-data';
+
+const CATEGORIAS = [
+  {id:'casa', label:'Casa', dot:'casa'},
+  {id:'terreiro', label:'Terreiro', dot:'terreiro'},
+  {id:'dividas', label:'Dívidas', dot:'dividas'}
+];
+
+const DEFAULT_DATA = {
+  saldo: 0,
+  contas: [
+    // CASA
+    {id:'c1', categoria:'casa', nome:'Luz', valor:380, venc:'', pago:false, marcado:false},
+    {id:'c2', categoria:'casa', nome:'Gás', valor:200, venc:'', pago:false, marcado:false},
+    {id:'c3', categoria:'casa', nome:'Claro', valor:155, venc:'', pago:false, marcado:false},
+    {id:'c4', categoria:'casa', nome:'Vivo', valor:190, venc:'', pago:false, marcado:false},
+    {id:'c5', categoria:'casa', nome:'Psicóloga', valor:250, venc:'', pago:false, marcado:false},
+    {id:'c6', categoria:'casa', nome:'Psiquiatra', valor:150, venc:'', pago:false, marcado:false},
+    {id:'c7', categoria:'casa', nome:'Ração', valor:250, venc:'', pago:false, marcado:false},
+    {id:'c8', categoria:'casa', nome:'PetLove', valor:230, venc:'', pago:false, marcado:false},
+    {id:'c9', categoria:'casa', nome:'Unha', valor:160, venc:'', pago:false, marcado:false},
+    {id:'c10', categoria:'casa', nome:'Muíla', valor:60, venc:'', pago:false, marcado:false},
+    {id:'c11', categoria:'casa', nome:'Cloud', valor:67, venc:'', pago:false, marcado:false},
+    {id:'c12', categoria:'casa', nome:'Claude', valor:110, venc:'', pago:false, marcado:false},
+    {id:'c13', categoria:'casa', nome:'BB', valor:57, venc:'', pago:false, marcado:false},
+    {id:'c14', categoria:'casa', nome:'Delicato', valor:400, venc:'', pago:true, marcado:false},
+    {id:'c15', categoria:'casa', nome:'Gympass', valor:350, venc:'', pago:true, marcado:false},
+    {id:'c16', categoria:'casa', nome:'Gabriela', valor:426, venc:'', pago:false, marcado:false},
+    {id:'c17', categoria:'casa', nome:'Stephanie', valor:250, venc:'', pago:false, marcado:false},
+    {id:'c18', categoria:'casa', nome:'Ferragem', valor:353, venc:'', pago:false, marcado:false},
+    // TERREIRO
+    {id:'t1', categoria:'terreiro', nome:'Luz (terreiro)', valor:95, venc:'', pago:false, marcado:false},
+    {id:'t2', categoria:'terreiro', nome:'Água (terreiro)', valor:40, venc:'', pago:false, marcado:false},
+    {id:'t3', categoria:'terreiro', nome:'Claro (terreiro)', valor:120, venc:'', pago:false, marcado:false},
+    {id:'t4', categoria:'terreiro', nome:'Alarme', valor:200, venc:'', pago:false, marcado:false},
+    {id:'t5', categoria:'terreiro', nome:'Aluguel', valor:1000, venc:'', pago:false, marcado:false},
+    {id:'t6', categoria:'terreiro', nome:'Fernanda', valor:200, venc:'', pago:false, marcado:false},
+    {id:'t7', categoria:'terreiro', nome:'Tassiana', valor:190, venc:'', pago:false, marcado:false},
+    {id:'t8', categoria:'terreiro', nome:'Everson', valor:300, venc:'', pago:false, marcado:false},
+    // DIVIDAS
+    {id:'d1', categoria:'dividas', nome:'Fatura', valor:497.84, venc:'', pago:true, marcado:false},
+    {id:'d2', categoria:'dividas', nome:'Blipay', valor:232.98, venc:'', pago:true, marcado:false},
+    {id:'d3', categoria:'dividas', nome:'iFood', valor:380.49, venc:'', pago:false, marcado:false},
+    {id:'d4', categoria:'dividas', nome:'Infinity', valor:353.43, venc:'', pago:false, marcado:false},
+    {id:'d5', categoria:'dividas', nome:'Inter', valor:300.49, venc:'', pago:false, marcado:false},
+  ]
+};
+
+let state = null;
+let saveTimer = null;
+
+function fmt(n){
+  return 'R$ ' + (n||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function parseValor(str){
+  str = (str||'').replace(/[^\d,.-]/g,'').replace(/\.(?=\d{3})/g,'').replace(',', '.');
+  const n = parseFloat(str);
+  return isNaN(n) ? 0 : n;
+}
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    state = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+  }catch(e){
+    state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  }
+  render();
+}
+
+function trySave(){
+  const note = document.getElementById('saveNote');
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    note.textContent = 'salvo';
+    note.classList.add('show');
+    setTimeout(()=>note.classList.remove('show'), 1200);
+  }catch(e){
+    console.error('erro ao salvar', e);
+    note.textContent = 'não salvou agora, mas nada foi perdido — tentando de novo';
+    note.classList.add('show');
+    setTimeout(trySave, 4000);
+  }
+}
+
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(trySave, 500);
+}
+
+function recalc(){
+  const totalMarcado = state.contas
+    .filter(c => c.marcado && !c.pago)
+    .reduce((s,c)=>s+c.valor, 0);
+  document.getElementById('totalMarcado').textContent = fmt(totalMarcado);
+  const sobra = state.saldo - totalMarcado;
+  const sobraEl = document.getElementById('sobra');
+  sobraEl.textContent = fmt(sobra);
+  sobraEl.className = 'value ' + (sobra >= 0 ? 'pos' : 'neg');
+}
+
+function updateConta(id, patch){
+  const c = state.contas.find(x=>x.id===id);
+  Object.assign(c, patch);
+  recalc();
+  scheduleSave();
+}
+
+function deleteConta(id){
+  state.contas = state.contas.filter(x=>x.id!==id);
+  render();
+  scheduleSave();
+}
+
+function addConta(categoria){
+  const id = categoria + '_' + Date.now();
+  state.contas.push({id, categoria, nome:'Nova conta', valor:0, venc:'', pago:false, marcado:false});
+  render();
+  scheduleSave();
+}
+
+function render(){
+  const container = document.getElementById('sections');
+  container.innerHTML = '';
+
+  CATEGORIAS.forEach(cat=>{
+    const contas = state.contas.filter(c=>c.categoria===cat.id);
+    const section = document.createElement('div');
+    section.className = 'section';
+
+    section.innerHTML = `<div class="section-header"><span class="dot ${cat.dot}"></span><h2>${cat.label}</h2></div>`;
+
+    contas.forEach(c=>{
+      const row = document.createElement('div');
+      row.className = 'conta' + (c.pago ? ' paga' : '');
+      row.innerHTML = `
+        <div class="conta-top">
+          <input type="checkbox" ${c.marcado?'checked':''} ${c.pago?'disabled':''} data-action="marcar" data-id="${c.id}">
+          <input class="conta-nome" value="${c.nome}" data-action="nome" data-id="${c.id}">
+          <div class="conta-valor-wrap">
+            <span>R$</span>
+            <input class="conta-valor" value="${c.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" data-action="valor" data-id="${c.id}" inputmode="decimal">
+          </div>
+        </div>
+        <div class="conta-bottom">
+          <div class="venc-wrap">
+            vence:
+            <input type="date" value="${c.venc}" data-action="venc" data-id="${c.id}">
+          </div>
+          <div class="row-actions">
+            <button class="btn-pago ${c.pago?'on':''}" data-action="pago" data-id="${c.id}">${c.pago ? 'pago ✓' : 'marcar pago'}</button>
+            <button class="btn-del" data-action="del" data-id="${c.id}">✕</button>
+          </div>
+        </div>
+      `;
+      section.appendChild(row);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-btn';
+    addBtn.textContent = '+ adicionar conta em ' + cat.label;
+    addBtn.dataset.action = 'add';
+    addBtn.dataset.cat = cat.id;
+    section.appendChild(addBtn);
+
+    container.appendChild(section);
+  });
+
+  document.getElementById('saldoInput').value = state.saldo.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  recalc();
+}
+
+document.getElementById('sections').addEventListener('click', (e)=>{
+  const t = e.target;
+  const action = t.dataset.action;
+  if(!action) return;
+  const id = t.dataset.id;
+  if(action==='pago'){
+    const c = state.contas.find(x=>x.id===id);
+    updateConta(id, {pago: !c.pago, marcado: false});
+    render();
+  } else if(action==='del'){
+    deleteConta(id);
+  } else if(action==='add'){
+    addConta(t.dataset.cat);
+  }
+});
+
+document.getElementById('sections').addEventListener('change', (e)=>{
+  const t = e.target;
+  const action = t.dataset.action;
+  if(!action) return;
+  const id = t.dataset.id;
+  if(action==='marcar'){
+    updateConta(id, {marcado: t.checked});
+  } else if(action==='venc'){
+    updateConta(id, {venc: t.value});
+  } else if(action==='valor'){
+    const v = parseValor(t.value);
+    updateConta(id, {valor: v});
+    t.value = v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  } else if(action==='nome'){
+    updateConta(id, {nome: t.value});
+  }
+});
+
+document.getElementById('saldoInput').addEventListener('change', (e)=>{
+  state.saldo = parseValor(e.target.value);
+  e.target.value = state.saldo.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  recalc();
+  scheduleSave();
+});
+
+// spine holes
+const spine = document.getElementById('spine');
+for(let i=0;i<14;i++){
+  const s = document.createElement('span');
+  spine.appendChild(s);
+}
+
+load();
+</script>
+</body>
+</html>

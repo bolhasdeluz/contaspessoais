@@ -707,6 +707,7 @@ select option{background:#1c1c1c}
   </div>
   <div class="pane" id="pane-desj"><div class="pi" id="desj-list"></div></div>
   <div class="pane" id="pane-dv"><div class="pi" id="dv-list"></div></div>
+  <div class="pane" id="pane-cp"><div class="pi" id="cp-list"></div></div>
   <div class="pane" id="pane-an">
     <div class="anual-nav">
       <button class="mbtn" onclick="chAnYear(-1)">&#8249;</button>
@@ -733,6 +734,7 @@ select option{background:#1c1c1c}
   <button class="tabbtn t-cart" id="tb-cart" onclick="setTab('cart')"><span class="tico">&#128179;</span><span>Cart&#245;es</span></button>
   <button class="tabbtn t-desj" id="tb-desj" onclick="setTab('desj')"><span class="tico">&#128138;</span><span>Desejos</span></button>
   <button class="tabbtn t-dv" id="tb-dv" onclick="setTab('dv')"><span class="tico">&#128220;</span><span>D&#237;vidas</span></button>
+  <button class="tabbtn t-cp" id="tb-cp" onclick="setTab('cp')"><span class="tico">&#129534;</span><span>Contas</span></button>
   <button class="tabbtn t-an" id="tb-an" onclick="setTab('an')"><span class="tico">&#128202;</span><span>Anual</span></button>
 </nav>
 <div class="fabwrap"><div class="fabmenu" id="fabmenu"></div><button class="fab" id="fabbt" onclick="togFab()"><span class="fabico">+</span></button></div>
@@ -1042,6 +1044,15 @@ select option{background:#1c1c1c}
   <div class="macts"><button class="btn bcn" onclick="fClose('ov-dv')">Cancelar</button><button class="btn" style="background:var(--pink);color:#fff" onclick="svDivida()">Salvar</button></div>
 </div></div>
 
+<!-- MODAL: CONTA A PAGAR -->
+<div class="ov" id="ov-cp" onclick="closeOv('ov-cp',event)"><div class="sheet">
+  <div class="shdl"></div><div class="stit" id="cp-tit">Nova Conta</div>
+  <div class="fg2"><div><label>Nome</label><input type="text" id="cp-nm" placeholder="Ex: Aluguel, Luz..."/></div><div><label>Valor (R$)</label><input type="number" id="cp-vl" placeholder="0,00" step="0.01" min="0"/></div></div>
+  <div class="fg2"><div><label>Categoria</label><select id="cp-ct"></select></div><div><label>Vencimento</label><input type="date" id="cp-vc"/></div></div>
+  <div class="fg"><label>Observa&#231;&#227;o</label><textarea id="cp-ob" placeholder="Notas..."></textarea></div>
+  <div class="macts"><button class="btn bcn" onclick="fClose('ov-cp')">Cancelar</button><button class="btn bsv" onclick="svCP()">Salvar</button></div>
+</div></div>
+
 <!-- MODAL: CONFIRM -->
 <div class="ov" id="ov-del" onclick="closeOv('ov-del',event)"><div class="sheet" style="max-width:340px;border-radius:14px;margin:0 auto 20px">
   <div class="shdl"></div><div class="stit">Remover item?</div>
@@ -1098,6 +1109,8 @@ let RD=JSON.parse(ls('abpp_renda')||'[]');
 let WL=JSON.parse(ls('abpp_desejos')||'[]');
 let DV=JSON.parse(ls('abpp_dividas')||'[]');        // dividas
 let CO=JSON.parse(ls('abpp_cartao_orca')||'{}');    // cartao no orcamento {cardId:bool}
+let CP=JSON.parse(ls('abpp_contaspagar')||'[]');    // contas a pagar {id,nome,valor,categoria,vencimento,obs,paga,pagarAgora}
+let saldoDisp=Number(ls('abpp_saldodisp')||0);      // saldo disponível pra simulação de pagamento
 
 
 
@@ -1111,6 +1124,8 @@ function saveAll(){
   setls('abpp_desejos',JSON.stringify(WL));
   setls('abpp_dividas',JSON.stringify(DV));
   setls('abpp_cartao_orca',JSON.stringify(CO));
+  setls('abpp_contaspagar',JSON.stringify(CP));
+  setls('abpp_saldodisp',String(saldoDisp));
 }
 // Migração legada de renda
 if(!RD.length){['abpp_fontes','abpp_income','abpp_rendas'].forEach(k=>{if(!RD.length){try{const p=JSON.parse(ls(k)||'[]');if(p.length){RD=p;saveAll();}}catch(e){}}})}
@@ -1371,6 +1386,9 @@ function rSumm(){
     const tot=ms.reduce((a,m)=>a+Number(m.valor||0),0);
     const rec=ms.filter(m=>m.status==='recebido').reduce((a,m)=>a+Number(m.valor||0),0);
     el.innerHTML=`<div class="sc rec"><div class="lb">Esperado</div><div class="vl">${brl(tot)}</div></div><div class="sc pg"><div class="lb">Recebido</div><div class="vl">${brl(rec)}</div></div><div class="sc pnd"><div class="lb">A receber</div><div class="vl">${brl(tot-rec)}</div></div>`;
+  } else if(tab==='cp'){
+    const{marcado,sobra}=cpCalc();
+    el.innerHTML=`<div class="sc disp"><div class="lb">Saldo disponível</div><input type="number" id="cp-saldo-input" value="${saldoDisp||''}" step="0.01" placeholder="0,00" oninput="cpSaldoInput(this.value)" onchange="saveAll()" style="width:100%;background:transparent;border:none;outline:none;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--blue);padding:0"/></div><div class="sc pnd"><div class="lb">Pagar agora</div><div class="vl" id="sc-cp-marcado">${brl(marcado)}</div></div><div class="sc"><div class="lb">Sobra</div><div class="vl" id="sc-cp-sobra" style="color:${sobra>=0?'var(--green)':'var(--red)'}">${brl(sobra)}</div></div>`;
   } else {
     const pend=WL.filter(i=>i.status!=='comprado');
     const tot=pend.reduce((a,i)=>a+Number(i.preco||0),0);
@@ -1400,6 +1418,12 @@ function rFrow(){
       <button class="fb ${filt==='todos'?'on':''}" onclick="setF('todos',this)">Todos</button>
       <button class="fb fpnd ${filt==='pnd'?'on':''}" onclick="setF('pnd',this)">&#9203; A receber</button>
       <button class="fb fpg ${filt==='pg'?'on':''}" onclick="setF('pg',this)">&#10003; Recebidos</button>`;
+  } else if(tab==='cp'){
+    el.innerHTML=`
+      <button class="fb ${filt==='todos'?'on':''}" onclick="setF('todos',this)">Todos</button>
+      <button class="fb fpnd ${filt==='pnd'?'on':''}" onclick="setF('pnd',this)">&#9203; Pendentes</button>
+      <button class="fb ${filt==='mk'?'on frec':''}" onclick="setF('mk',this)">&#128181; Pagar agora</button>
+      <button class="fb fpg ${filt==='pg'?'on':''}" onclick="setF('pg',this)">&#10003; Pagas</button>`;
   } else {
     el.innerHTML=`
       <button class="fb ${filt==='todos'?'on':''}" onclick="setF('todos',this)">Todos</button>
@@ -1433,6 +1457,8 @@ function rFab(){
     el.innerHTML=`<div class="fabi"><span class="fabl">Nova fonte</span><button class="fabm" onclick="cFab();openRd()">+</button></div>`;
   } else if(tab==='dv'){
     el.innerHTML='<div class="fabi"><span class="fabl">Nova dívida</span><button class="fabm" onclick="cFab();openDV()">+</button></div>';
+  } else if(tab==='cp'){
+    el.innerHTML='<div class="fabi"><span class="fabl">Nova conta</span><button class="fabm" onclick="cFab();openCP()">+</button></div>';
   } else {
     el.innerHTML=`<div class="fabi"><span class="fabl">Novo desejo</span><button class="fabm" onclick="cFab();openDj()">+</button></div>`;
   }
@@ -1961,6 +1987,105 @@ function svDivida(){
   saveAll();fClose('ov-dv');rContent();
 }
 
+// ====== CONTAS A PAGAR (simulador "e se eu pagar agora") ======
+let eCpId=null;
+function fmtVenc(d){
+  if(!d)return'';
+  const[y,m,dd]=d.split('-');
+  return`${dd}/${m}/${y}`;
+}
+function cpCalc(){
+  const marcado=CP.filter(c=>!c.paga&&c.pagarAgora).reduce((a,c)=>a+Number(c.valor||0),0);
+  const sobra=saldoDisp-marcado;
+  return{marcado,sobra};
+}
+function cpSaldoInput(v){
+  saldoDisp=parseFloat(v)||0;
+  const{marcado,sobra}=cpCalc();
+  const mEl=document.getElementById('sc-cp-marcado');if(mEl)mEl.textContent=brl(marcado);
+  const sEl=document.getElementById('sc-cp-sobra');if(sEl){sEl.textContent=brl(sobra);sEl.style.color=sobra>=0?'var(--green)':'var(--red)';}
+}
+function openCP(id=null){
+  eCpId=id;
+  document.getElementById('cp-tit').textContent=id?'Editar Conta':'Nova Conta';
+  ['cp-nm','cp-vl','cp-vc','cp-ob'].forEach(x=>document.getElementById(x).value='');
+  fillCat('cp-ct');
+  if(id){
+    const c=CP.find(x=>x.id===id);if(c){
+      document.getElementById('cp-nm').value=c.nome;
+      document.getElementById('cp-vl').value=c.valor;
+      fillCat('cp-ct',c.categoria);
+      document.getElementById('cp-vc').value=c.vencimento||'';
+      document.getElementById('cp-ob').value=c.obs||'';
+    }
+  }
+  openOv('ov-cp');setTimeout(()=>document.getElementById('cp-nm').focus(),350);
+}
+function svCP(){
+  const nome=document.getElementById('cp-nm').value.trim();if(!nome){document.getElementById('cp-nm').focus();return}
+  const valor=parseFloat(document.getElementById('cp-vl').value)||0;
+  const categoria=document.getElementById('cp-ct').value||'Outros';
+  const vencimento=document.getElementById('cp-vc').value||'';
+  const obs=document.getElementById('cp-ob').value.trim();
+  if(eCpId){const c=CP.find(x=>x.id===eCpId);if(c)Object.assign(c,{nome,valor,categoria,vencimento,obs})}
+  else CP.push({id:uid(),nome,valor,categoria,vencimento,obs,paga:false,pagarAgora:false,createdAt:new Date().toISOString()});
+  saveAll();fClose('ov-cp');rContent();
+}
+function togCpAgora(id){
+  const c=CP.find(x=>x.id===id);if(!c||c.paga)return;
+  c.pagarAgora=!c.pagarAgora;
+  saveAll();rContent();
+}
+function togCpPaga(id){
+  const c=CP.find(x=>x.id===id);if(!c)return;
+  c.paga=!c.paga;
+  if(c.paga)c.pagarAgora=false;
+  saveAll();rContent();
+}
+function mkCpItem(c){
+  const paga=!!c.paga;
+  const agora=!paga&&!!c.pagarAgora;
+  const hoje=new Date().toISOString().slice(0,10);
+  const atrasada=!!c.vencimento&&!paga&&c.vencimento<hoje;
+  const vencTxt=c.vencimento?fmtVenc(c.vencimento):'';
+  const vencBdg=vencTxt?`<span class="bdg" style="background:${atrasada?'var(--rdd)':'var(--sur2)'};color:${atrasada?'var(--red)':'var(--dim)'};border:1px solid ${atrasada?'rgba(239,68,68,.3)':'var(--bd2)'}">${atrasada?'&#9888; Venceu ':'Vence '}${vencTxt}</span>`:'';
+  const pagaBdg=paga?'<span class="bdg" style="background:var(--gd);color:var(--green);border:1px solid rgba(34,197,94,.2)">Paga</span>':'';
+  const agoraBdg=agora?'<span class="bdg" style="background:var(--bld);color:var(--blue);border:1px solid rgba(59,130,246,.2)">Vou pagar agora</span>':'';
+  const obsHtml=c.obs?`<div class="iobs">${esc(c.obs)}</div>`:'';
+  return`<div class="item ${paga?'pago':''}" style="${paga?'opacity:.55':''}">
+    <input type="checkbox" title="Vou pagar agora" ${agora?'checked':''} ${paga?'disabled':''} onclick="event.stopPropagation();togCpAgora('${c.id}')" style="width:20px;height:20px;margin-top:1px;flex-shrink:0;accent-color:var(--blue);cursor:${paga?'default':'pointer'}"/>
+    <div class="ib">
+      <div class="ir1"><span class="iname ${paga?'pago':''}">${esc(c.nome)}</span><span class="ival" style="color:${paga?'var(--dim)':agora?'var(--blue)':'var(--tx)'}">${brl(c.valor)}</span></div>
+      <div class="bdgs">${pagaBdg}${agoraBdg}${vencBdg}</div>
+      ${obsHtml}
+    </div>
+    <div class="iacts">
+      <button class="icb" onclick="event.stopPropagation();togCpPaga('${c.id}')" title="${paga?'Desmarcar como paga':'Marcar como paga'}" style="color:${paga?'var(--green)':'var(--mut)'}">&#10003;</button>
+      <button class="icb" onclick="event.stopPropagation();openCP('${c.id}')">&#9998;</button>
+      <button class="icb del" onclick="event.stopPropagation();askDel('${c.id}','cp')">&#10005;</button>
+    </div>
+  </div>`;
+}
+function rCP(){
+  const el=document.getElementById('cp-list');
+  let items=CP;
+  if(filt==='pnd')items=CP.filter(c=>!c.paga&&!c.pagarAgora);
+  else if(filt==='mk')items=CP.filter(c=>!c.paga&&c.pagarAgora);
+  else if(filt==='pg')items=CP.filter(c=>c.paga);
+  if(!items.length){el.innerHTML='<div class="empty"><div class="eico">&#129534;</div><p>Nenhuma conta cadastrada.<br>Toque em <b>+</b> para adicionar.</p></div>';return}
+  const grp={};
+  items.forEach(c=>{const cat=CATS[c.categoria]||c.categoria||'Outros';if(!grp[cat])grp[cat]=[];grp[cat].push(c)});
+  let h='';
+  Object.entries(grp).sort(([a],[b])=>a.localeCompare(b,'pt')).forEach(([cat,list])=>{
+    list.sort((a,b)=>(a.vencimento||'9999-99-99').localeCompare(b.vencimento||'9999-99-99'));
+    const tot=list.reduce((a,c)=>a+Number(c.valor||0),0);
+    h+=`<div class="cg"><div class="ch"><span class="cl">${esc(cat)}</span><span class="cln"></span><span class="cs">${brl(tot)}</span></div>`;
+    list.forEach(c=>{h+=mkCpItem(c)});
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
 // ====== MASTER RENDER ======
 // ====== BANNER "CONFERIR VALORES" (itens sinalizados como valor não confirmado, em qualquer mês) ======
 function mesLbl(mesKey){const[y,m]=mesKey.split('-').map(Number);return MFL[m-1]+'/'+y}
@@ -1992,6 +2117,7 @@ function rContent(){
   else if(tab==='cart')rCart();
   else if(tab==='rend')rRend();
   else if(tab==='dv')rDV();
+  else if(tab==='cp')rCP();
   else if(tab==='desj')rDesj();
   else if(tab==='an')rAnual();
   rSumm();rFrow();rConferir();
@@ -2604,6 +2730,7 @@ function doDelete(){
   else if(delT==='vr')VR.items=(VR.items||[]).filter(i=>i.id!==delId);
   else if(delT==='rd')RD=RD.filter(r=>r.id!==delId);
   else if(delT==='dj')WL=WL.filter(w=>w.id!==delId);
+  else if(delT==='cp')CP=CP.filter(c=>c.id!==delId);
   saveAll();fClose('ov-del');rContent();
 }
 
@@ -2612,10 +2739,10 @@ function openOv(id){document.getElementById(id).classList.add('on')}
 function closeOv(id,e){if(e.target===document.getElementById(id))fClose(id)}
 function fClose(id){
   document.getElementById(id).classList.remove('on');
-  const r={['ov-dv']:()=>eDvId=null,['ov-s']:()=>eId=null,['ov-ctx']:()=>eCtxId=null,['ov-crec']:()=>eCRecId=null,['ov-cran']:()=>eCRanId=null,['ov-rd']:()=>eRdId=null,['ov-rdan']:()=>eRdAnId=null,['ov-dj']:()=>eDjId=null,['ov-ccfg']:()=>eCCfgId=null,['ov-del']:()=>{delId=null;delT=null;delGrupoId=null}};
+  const r={['ov-dv']:()=>eDvId=null,['ov-cp']:()=>eCpId=null,['ov-s']:()=>eId=null,['ov-ctx']:()=>eCtxId=null,['ov-crec']:()=>eCRecId=null,['ov-cran']:()=>eCRanId=null,['ov-rd']:()=>eRdId=null,['ov-rdan']:()=>eRdAnId=null,['ov-dj']:()=>eDjId=null,['ov-ccfg']:()=>eCCfgId=null,['ov-del']:()=>{delId=null;delT=null;delGrupoId=null}};
   if(r[id])r[id]();
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape')['ov-dv','ov-s','ov-b','ov-br','ov-dan','ov-ccfg','ov-ctx','ov-crec','ov-cran','ov-vr','ov-rd','ov-rdan','ov-dj','ov-del'].forEach(id=>{if(document.getElementById(id)?.classList.contains('on'))fClose(id)})});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')['ov-dv','ov-cp','ov-s','ov-b','ov-br','ov-dan','ov-ccfg','ov-ctx','ov-crec','ov-cran','ov-vr','ov-rd','ov-rdan','ov-dj','ov-del'].forEach(id=>{if(document.getElementById(id)?.classList.contains('on'))fClose(id)})});
 
 
 // ====== ABA ANUAL ======
@@ -3510,7 +3637,7 @@ function cfgSave(){
   setls('abpp_cats',JSON.stringify(CATS));
   fClose('ov-cfg');
   // Recarregar selects abertos
-  fillCat('s-ct');fillCat('ctx-ct');fillCat('ca-edit-cat');
+  fillCat('s-ct');fillCat('ctx-ct');fillCat('ca-edit-cat');fillCat('cp-ct');
 }
 
 

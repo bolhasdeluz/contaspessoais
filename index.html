@@ -1524,6 +1524,18 @@ const AUTO_CAT_RULES=[
   {re:/pet center/,cat:'Pet'},
   {re:/panvel farm[áa]cias/,cat:'Farmácia'},
   {re:/99\s*food/,cat:'Transporte'},
+  {re:/combustiv|\bcombu\b|abastecedora de comb|\bposto\b|saque e pague|garagem/,cat:'Transporte'},
+  {re:/via expressa vip/,cat:'Transporte'},
+  {re:/grid motos|\bt\s?motos\b/,cat:'Transporte'},
+  {re:/\bpetz\b|danka vet|uniao pet/,cat:'Pet'},
+  {re:/farmacia s[ãa]o jo[ãa]o|\braia\d+/,cat:'Farmácia'},
+  {re:/casa de carnes|superme(rcado)? gecepel|armaz[ée][nm]|mercearia|atacarejo|convenien|fruteira|\bsim (poa|eldorado)\b|\baliment/,cat:'Mercado'},
+  {re:/churrasquinho|espetinho|espet[ãa]o|chef da empada|hora do pastel|riviera bar/,cat:'Restaurantes/Lanches'},
+  {re:/magia dos orixas|vida cigana|divina magia|\bmae o a c\b/,cat:'Serviços do terreiro'},
+  {re:/google brasil pagamentos/,cat:'Assinaturas'},
+  {re:/multiplan administrad|liveshows merchandisin|fly51 entretenimento/,cat:'Lazer'},
+  {re:/sol administradora de recebiveis/,cat:'Parcelados/BNPL'},
+  {re:/tarifa trans|integr\.?\s*capital subscrito|pr[eê]mio de seguro|cred pontos|cartão cashback/,cat:'Tarifas bancárias'},
 ];
 function autoCategorize(nomeRaw,valor){
   const n=String(nomeRaw||'').toLowerCase();
@@ -1604,6 +1616,48 @@ function patchRecategorizarRevisarComRegrasAtuais(){
     });
   });
   setls('abpp_patch_recat_revisar_v2','1');
+  saveAll();
+}
+
+// Mais uma rodada: tira número de documento colado antes do nome mesmo sem o prefixo
+// "PAGAMENTO/RECEBIMENTO PIX -" (ex: "59775918 Lisiane Linhares Gomes"), detecta nome
+// colado sem espaço (ex: "DiegoSantosNakaso") e tenta categorizar de novo com as regras
+// atuais (postos de combustível, pet shops, farmácias, mercados, restaurantes etc.).
+function patchRecategorizarRevisarV3(){
+  if(ls('abpp_patch_recat_revisar_v3'))return;
+  const rxDocPrefix=/^\d[\d./-]{3,}\s+(.+)$/;
+  const rxCamel=/^[A-ZÀ-Ü][a-zà-ü]+(?:[A-ZÀ-Ü][a-zà-ü]+){1,4}$/;
+  const rxPixEnviadoRecebido=/^pix (enviado|recebido):\s*(?:"*cp\s*:)?\s*\d[\d-]*-?\s*(.+?)"*$/i;
+  // Entidades conhecidas sem categoria mais específica que "Outros" — já têm nome claro,
+  // não há mais nada pra descobrir perguntando de novo.
+  const semCategoriaMelhor=/^(darf coop|sefaz|zig\*allianz|pix marketplace|transferencia recebida|brasilcap)/i;
+  Object.keys(D).forEach(mes=>{
+    (D[mes]||[]).forEach(i=>{
+      if(!i.revisar)return;
+      let nome=i.nome.trim();
+      let m=rxDocPrefix.exec(nome);
+      if(m)nome=m[1].trim();
+      else{const m2=rxPixEnviadoRecebido.exec(nome);if(m2)nome=m2[2].trim();}
+      const m3=rxDocPrefix.exec(nome);
+      if(m3)nome=m3[1].trim();
+      const auto=autoCategorize(nome,i.valor);
+      if(auto&&auto.cat){
+        i.nome=nome;i.categoria=auto.cat;if(auto.tipo)i.tipo=auto.tipo;delete i.revisar;
+        return;
+      }
+      if(looksLikePersonName(nome)||rxCamel.test(nome)){
+        i.nome=nome.replace(/([a-zà-ü])([A-ZÀ-Ü])/g,'$1 $2');
+        i.categoria='Pix para pessoas';delete i.revisar;
+        return;
+      }
+      if(semCategoriaMelhor.test(nome)){
+        i.nome=nome;i.categoria='Outros';delete i.revisar;
+        return;
+      }
+      i.nome=nome; // pelo menos limpa o nome, mesmo sem resolver a categoria
+    });
+  });
+  setls('abpp_patch_recat_revisar_v3','1');
   saveAll();
 }
 function brl(v){return'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -4381,6 +4435,7 @@ patchJunJulAgo2026NomesPix();
 patchAgoRestante2026();
 patchExtrairNomesPixDetalhado();
 patchRecategorizarRevisarComRegrasAtuais();
+patchRecategorizarRevisarV3();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>

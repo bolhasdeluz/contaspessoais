@@ -1392,6 +1392,80 @@ function patchAbrMaiJun2026NomesPix(){
   saveAll();
 }
 
+// Reconciliação do restante de junho + julho + agosto/2026 — mesma lógica, nomes revelados
+// pelos prints do extrato real.
+function patchJunJulAgo2026NomesPix(){
+  if(ls('abpp_patch_junjulago2026_pix'))return;
+  const porMes={
+    '2026-06':[
+      {valor:2000.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:400.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:1500.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:79.90,nome:'Panvel Farmácias',categoria:'Farmácia'},
+      {valor:150.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:150.00,nome:'Beatriz Brandi Vieira',categoria:'Pix para pessoas'},
+      {valor:300.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:300.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:308.47,nome:'Ifood.com Agência de Restaurantes Online',categoria:'Mercado via app'},
+    ],
+    '2026-07':[
+      {valor:270.00,nome:'Diego Santos do Canto',categoria:'Serviços do terreiro'},
+      {valor:1000.00,nome:'Sonia Regina Batistella Schneider',categoria:'Aluguel'},
+      {valor:3000.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:137.00,nome:'Diego Rafael Sanchez da Silva',categoria:'Pix para pessoas'},
+      {valor:170.30,nome:'Amazon.com.br',categoria:'Outros'},
+      {valor:128.85,nome:'Receita Federal',categoria:'Outros'},
+      {valor:300.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:100.00,nome:'Ótica Manica',categoria:'Saúde'},
+      {valor:25.00,nome:'Zona Azul Brasil',categoria:'Transporte'},
+      {valor:40.00,nome:'Luis Henrique da Silva Cardoso',categoria:'Pix para pessoas'},
+      {valor:382.37,nome:'Zaffari',categoria:'Mercado'},
+      {valor:94.22,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:176.98,nome:'Ifood.com Agência de Restaurantes Online',categoria:'Mercado via app'},
+    ],
+    '2026-08':[
+      {valor:353.08,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:11.56,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+      {valor:13.97,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+      {valor:18.98,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+      {valor:18.99,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+      {valor:48.13,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:160.00,nome:'Bruna Alexandra de Mello Carvalho',categoria:'Beleza'},
+      {valor:110.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:280.00,nome:'Viviane Dias do Rousar',categoria:'Pix para pessoas'},
+      {valor:200.00,nome:'Fernanda Boiani Carvalho',categoria:'Serviços do terreiro'},
+      {valor:200.00,nome:'Diego Santos do Canto',categoria:'Serviços do terreiro'},
+      {valor:119.48,nome:'CEEE Distribuição',categoria:'Luz'},
+      {valor:186.90,nome:'Telefônica Bras (Vivo)',categoria:'Internet/Celular'},
+      {valor:213.50,nome:'Ferragem Tarragô',categoria:'Dívida/Crédito rotativo'},
+      {valor:250.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:56.85,nome:'PagueVeloz',categoria:'Dívida/Crédito rotativo'},
+      {valor:393.90,nome:'CEEE Distribuição',categoria:'Luz'},
+      {valor:600.00,nome:'Mãe Oxum Aviário e Criatório',categoria:'Serviços do terreiro'},
+      {valor:80.00,nome:'Everson Azambuja Conceição',categoria:'Pix para pessoas'},
+      {valor:128.50,nome:'Jumbo',categoria:'Dívida/Crédito rotativo'},
+    ],
+  };
+  Object.entries(porMes).forEach(([mes,mapD])=>{
+    if(!D[mes])return;
+    mapD.forEach(m=>{
+      const item=D[mes].find(i=>i.revisar&&i.nome.trim().toUpperCase()==='PAGAMENTO PIX'&&Math.abs(i.valor-m.valor)<0.005);
+      if(item){item.nome=m.nome;item.categoria=m.categoria;if(m.tipo)item.tipo=m.tipo;delete item.revisar;}
+    });
+  });
+  // Recebimentos de Anna Paula Gomes em julho (300,00 + 104,35 + 15,81) — transferência
+  // interna, não renda real. Remove do total de renda do mês (mesmo caso de março).
+  const anaRecebidoJulho=300.00+104.35+15.81;
+  const fonteDiversos=RD.find(r=>r.nome==='Pix recebido (diversos)');
+  if(fonteDiversos&&fonteDiversos.meses['2026-07']){
+    const novoValor=Math.round((fonteDiversos.meses['2026-07'].valor-anaRecebidoJulho)*100)/100;
+    if(novoValor<=0.01)delete fonteDiversos.meses['2026-07'];
+    else fonteDiversos.meses['2026-07'].valor=novoValor;
+  }
+  setls('abpp_patch_junjulago2026_pix','1');
+  saveAll();
+}
+
 // Regras de categorização automática por pessoa/comerciante/palavra-chave conhecidos (memória financeira).
 const AUTO_CAT_RULES=[
   {re:/anna paula (gomes|paula)/,cat:'Transferência interna',tipo:'transferencia'},
@@ -4202,6 +4276,7 @@ seedConferirSet2026();
 seedStephanieSet2026();
 patchMarco2026NomesPix();
 patchAbrMaiJun2026NomesPix();
+patchJunJulAgo2026NomesPix();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>

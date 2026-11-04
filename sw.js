@@ -1,8 +1,9 @@
-const CACHE = 'abpp-v4';
+const CACHE = 'abpp-v5';
 const ASSETS = [
   '.',
   './index.html',
   './manifest.json',
+  './data_extrato_2026.js',
   'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap'
 ];
 

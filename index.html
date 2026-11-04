@@ -1466,6 +1466,25 @@ function patchJunJulAgo2026NomesPix(){
   saveAll();
 }
 
+// Últimos 3 pendentes de agosto/2026, revelados pelos prints.
+function patchAgoRestante2026(){
+  if(ls('abpp_patch_ago_restante_2026'))return;
+  const mes='2026-08';
+  const mapD=[
+    {valor:1000.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+    {valor:1000.00,nome:'Sonia Regina Batistella Schneider',categoria:'Aluguel'},
+    {valor:22.00,nome:'Nascente Distribuidora',categoria:'Água'},
+  ];
+  if(D[mes]){
+    mapD.forEach(m=>{
+      const item=D[mes].find(i=>i.revisar&&i.nome.trim().toUpperCase()==='PAGAMENTO PIX'&&Math.abs(i.valor-m.valor)<0.005);
+      if(item){item.nome=m.nome;item.categoria=m.categoria;if(m.tipo)item.tipo=m.tipo;delete item.revisar;}
+    });
+  }
+  setls('abpp_patch_ago_restante_2026','1');
+  saveAll();
+}
+
 // Regras de categorização automática por pessoa/comerciante/palavra-chave conhecidos (memória financeira).
 const AUTO_CAT_RULES=[
   {re:/anna paula (gomes|paula)/,cat:'Transferência interna',tipo:'transferencia'},
@@ -1495,6 +1514,15 @@ const AUTO_CAT_RULES=[
   {re:/\blahude\b/,cat:'Mercado'},
   {re:/adhomemarket|adhome ?market|\badhome\b/,cat:'Mercado'},
   {re:/\bbistek\b|\bcarrefour\b/,cat:'Mercado'},
+  {re:/ferragem tarrag[oô]/,cat:'Dívida/Crédito rotativo'},
+  {re:/\bjumbo\b/,cat:'Dívida/Crédito rotativo'},
+  {re:/\buber\b/,cat:'Transporte'},
+  {re:/zona azul/,cat:'Transporte'},
+  {re:/\bdetran\b/,cat:'Transporte'},
+  {re:/telefonica bras/,cat:'Internet/Celular'},
+  {re:/\bcobasi\b/,cat:'Pet'},
+  {re:/pet center/,cat:'Pet'},
+  {re:/panvel farm[áa]cias/,cat:'Farmácia'},
 ];
 function autoCategorize(nomeRaw,valor){
   const n=String(nomeRaw||'').toLowerCase();
@@ -1504,6 +1532,42 @@ function autoCategorize(nomeRaw,valor){
   }
   for(const r of AUTO_CAT_RULES){if(r.re.test(n))return{cat:r.cat,tipo:r.tipo}}
   return null;
+}
+
+const BIZ_HINT_RE=/ltda|\bs\.?a\.?\b|\bme\b|eireli|com[eé]rcio|ind[uú]stria|servi[cç]os|distribui|institui|\bcia\b|marketplace|administradora|participa[cç][oõ]es|tecnologia|online|&/i;
+function looksLikePersonName(nome){
+  const n=nome.trim();
+  if(BIZ_HINT_RE.test(n))return false;
+  if(/\d/.test(n))return false;
+  const words=n.split(/\s+/);
+  return words.length>=2&&words.length<=6;
+}
+// A partir de set/2026 o Sicredi passou a incluir o nome do destinatário na própria
+// descrição ("PAGAMENTO PIX - <documento> <NOME>"). O import original não separava esse
+// nome do número do documento, então vários lançamentos ficaram marcados pra revisão só
+// por causa dos dígitos do CPF/CNPJ embutidos. Esse patch extrai o nome e tenta
+// categorizar de novo com as mesmas regras do import.
+function patchExtrairNomesPixDetalhado(){
+  if(ls('abpp_patch_extrai_nomes_pix'))return;
+  const rx=/^(?:PAGAMENTO|RECEBIMENTO)\s+PIX\s*-\s*[\d./-]+\s+(.+)$/i;
+  Object.keys(D).forEach(mes=>{
+    (D[mes]||[]).forEach(i=>{
+      if(!i.revisar)return;
+      const m=rx.exec(i.nome.trim());
+      if(!m)return;
+      const nome=m[1].trim().replace(/\s+/g,' ');
+      const auto=autoCategorize(nome,i.valor);
+      if(auto&&auto.cat){
+        i.nome=nome;i.categoria=auto.cat;if(auto.tipo)i.tipo=auto.tipo;delete i.revisar;
+      } else if(looksLikePersonName(nome)){
+        i.nome=nome;i.categoria='Pix para pessoas';delete i.revisar;
+      } else {
+        i.nome=nome; // limpa o nome mas deixa marcado pra revisão
+      }
+    });
+  });
+  setls('abpp_patch_extrai_nomes_pix','1');
+  saveAll();
 }
 function brl(v){return'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -4277,6 +4341,8 @@ seedStephanieSet2026();
 patchMarco2026NomesPix();
 patchAbrMaiJun2026NomesPix();
 patchJunJulAgo2026NomesPix();
+patchAgoRestante2026();
+patchExtrairNomesPixDetalhado();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>

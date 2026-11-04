@@ -1319,6 +1319,79 @@ function patchMarco2026NomesPix(){
   saveAll();
 }
 
+// Reconciliação de abril/maio/junho 2026 — mesma lógica do patch de março, com os nomes
+// revelados pelos prints do extrato real da Sicredi (casado por valor).
+function patchAbrMaiJun2026NomesPix(){
+  if(ls('abpp_patch_abrmaijun2026_pix'))return;
+  const porMes={
+    '2026-04':[
+      {valor:91.74,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:87.50,nome:'Mine Mercado Ypu',categoria:'Mercado'},
+      {valor:51.60,nome:'Cobasi',categoria:'Pet'},
+      {valor:270.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:138.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:200.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:453.75,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:800.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:92.41,nome:'Mine Mercado Ypu',categoria:'Mercado'},
+      {valor:1500.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:2000.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+    ],
+    '2026-05':[
+      {valor:58.13,nome:'Município de Porto Alegre',categoria:'Moradia'},
+      {valor:75.44,nome:'Pet Center',categoria:'Pet'},
+      {valor:50.00,nome:'Murilo Goulart Fraga',categoria:'Pix para pessoas'},
+      {valor:27.97,nome:'A D Home Market Ltda',categoria:'Mercado'},
+      {valor:35.59,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:45.49,nome:'Zaffari',categoria:'Mercado'},
+      {valor:134.97,nome:'Pet Center',categoria:'Pet'},
+      {valor:14.50,nome:'Manuella de Almeida da Silva',categoria:'Pix para pessoas'},
+      {valor:70.46,nome:'A D Home Market Ltda',categoria:'Mercado'},
+      {valor:278.00,nome:'Ferragem Tarragô',categoria:'Dívida/Crédito rotativo'},
+      {valor:47.05,nome:'Posto Verdes Campos',categoria:'Transporte'},
+      {valor:25.00,nome:'Sady da Rosa',categoria:'Pix para pessoas'},
+      {valor:326.44,nome:'Pagaleve',categoria:'Parcelados/BNPL'},
+      {valor:31.99,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+      {valor:19.98,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+      {valor:33.98,nome:'Pet Center',categoria:'Pet'},
+      {valor:122.96,nome:'Pet Center',categoria:'Pet'},
+      {valor:50.97,nome:'A D Home Market Ltda',categoria:'Mercado'},
+      {valor:59.90,nome:'São João Farmácias',categoria:'Farmácia'},
+      {valor:13.90,nome:'RD Prex Print Experience Gráfica Expressa',categoria:'Serviços'},
+      {valor:20.90,nome:'RD Prex Print Experience Gráfica Expressa',categoria:'Serviços'},
+      {valor:36.47,nome:'A D Home Market Ltda',categoria:'Mercado'},
+      {valor:200.00,nome:'Fernanda Boiani Carvalho',categoria:'Serviços do terreiro'},
+      {valor:184.00,nome:'PagueVeloz',categoria:'Dívida/Crédito rotativo'},
+      {valor:56.85,nome:'PagueVeloz',categoria:'Dívida/Crédito rotativo'},
+      {valor:1000.00,nome:'Sonia Regina Batistella Schneider',categoria:'Aluguel'},
+      {valor:233.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:400.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:185.90,nome:'Telefônica Bras (Vivo)',categoria:'Internet/Celular'},
+      {valor:54.75,nome:'Blipay',categoria:'Parcelados/BNPL'},
+      {valor:160.00,nome:'Bruna Alexandra de Mello Carvalho',categoria:'Beleza'},
+      {valor:923.75,nome:'NL Mendes Zeladoria',categoria:'Serviços do terreiro'},
+      {valor:275.97,nome:'Ifood.com Agência de Restaurantes Online',categoria:'Mercado via app'},
+      {valor:180.00,nome:'Gabriella Garcia da Silva',categoria:'Pix para pessoas'},
+    ],
+    '2026-06':[
+      {valor:384.47,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+      {valor:34.76,nome:'Amazon.com.br',categoria:'Outros'},
+      {valor:16.80,nome:'Renove Modas',categoria:'Vestuário'},
+      {valor:60.60,nome:'Renove Modas',categoria:'Vestuário'},
+      {valor:30.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+    ],
+  };
+  Object.entries(porMes).forEach(([mes,mapD])=>{
+    if(!D[mes])return;
+    mapD.forEach(m=>{
+      const item=D[mes].find(i=>i.revisar&&i.nome.trim().toUpperCase()==='PAGAMENTO PIX'&&Math.abs(i.valor-m.valor)<0.005);
+      if(item){item.nome=m.nome;item.categoria=m.categoria;if(m.tipo)item.tipo=m.tipo;delete item.revisar;}
+    });
+  });
+  setls('abpp_patch_abrmaijun2026_pix','1');
+  saveAll();
+}
+
 // Regras de categorização automática por pessoa/comerciante/palavra-chave conhecidos (memória financeira).
 const AUTO_CAT_RULES=[
   {re:/anna paula (gomes|paula)/,cat:'Transferência interna',tipo:'transferencia'},
@@ -4128,6 +4201,7 @@ patchOdooDesativado();
 seedConferirSet2026();
 seedStephanieSet2026();
 patchMarco2026NomesPix();
+patchAbrMaiJun2026NomesPix();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>

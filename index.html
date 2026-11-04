@@ -1660,6 +1660,48 @@ function patchRecategorizarRevisarV3(){
   setls('abpp_patch_recat_revisar_v3','1');
   saveAll();
 }
+
+// Separa os recebimentos de entregas/corridas (iFood, Uber) que tinham caído como despesa
+// ou misturados numa renda genérica — viram uma fonte de renda própria "Entregas".
+function patchEntregasRenda(){
+  if(ls('abpp_patch_entregas_renda'))return;
+  const ifoodRecebidos=[
+    {mes:'2026-09',valor:0.01},{mes:'2026-09',valor:39.57},{mes:'2026-09',valor:126.09},
+    {mes:'2026-10',valor:83.82},{mes:'2026-10',valor:100.00},{mes:'2026-10',valor:94.20},
+    {mes:'2026-10',valor:23.95},{mes:'2026-10',valor:47.84},{mes:'2026-10',valor:100.00},
+    {mes:'2026-10',valor:37.24},
+  ];
+  const porMes={};
+  ifoodRecebidos.forEach(({mes,valor})=>{
+    if(!D[mes])return;
+    const idx=D[mes].findIndex(i=>/ifood/i.test(i.nome)&&Math.abs(i.valor-valor)<0.005);
+    if(idx>=0){
+      D[mes].splice(idx,1);
+      porMes[mes]=(porMes[mes]||0)+valor;
+    }
+  });
+  // Uber em agosto/2026 veio como "RECEBIMENTO PIX" genérico (sem nome na descrição),
+  // identificado pelos prints do extrato: 173,32 + 71,43 + 132,21 = 376,96.
+  const uberAgosto=376.96;
+  const fonteDiversos=RD.find(r=>r.nome==='Pix recebido (diversos)');
+  if(fonteDiversos&&fonteDiversos.meses['2026-08']){
+    const novoValor=Math.round((fonteDiversos.meses['2026-08'].valor-uberAgosto)*100)/100;
+    if(novoValor<=0.01)delete fonteDiversos.meses['2026-08'];
+    else fonteDiversos.meses['2026-08'].valor=novoValor;
+    porMes['2026-08']=(porMes['2026-08']||0)+uberAgosto;
+  }
+  let fonteEntregas=RD.find(r=>r.nome==='Entregas (99/iFood/Uber)');
+  if(!fonteEntregas){
+    fonteEntregas={id:uid(),nome:'Entregas (99/iFood/Uber)',recorrente:false,obs:'',createdAt:new Date().toISOString(),meses:{}};
+    RD.push(fonteEntregas);
+  }
+  Object.entries(porMes).forEach(([mes,valor])=>{
+    const atual=fonteEntregas.meses[mes]?.valor||0;
+    fonteEntregas.meses[mes]={valor:Math.round((atual+valor)*100)/100,status:'recebido'};
+  });
+  setls('abpp_patch_entregas_renda','1');
+  saveAll();
+}
 function brl(v){return'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function ym(y,m){return`${y}-${String(m).padStart(2,'0')}`}
@@ -4436,6 +4478,7 @@ patchAgoRestante2026();
 patchExtrairNomesPixDetalhado();
 patchRecategorizarRevisarComRegrasAtuais();
 patchRecategorizarRevisarV3();
+patchEntregasRenda();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>

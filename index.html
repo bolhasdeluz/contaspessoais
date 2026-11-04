@@ -95,6 +95,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
 .bdg.ext{background:var(--prd);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
 .bdg.cc{background:var(--tld);color:var(--teal);border:1px solid rgba(20,184,166,.2)}
 .bdg.conf{background:var(--ad);color:var(--amber);border:1px solid rgba(245,158,11,.35)}
+.bdg.revcat{background:var(--bld);color:var(--blue);border:1px solid rgba(59,130,246,.35);cursor:pointer}
 .conf-banner{margin:0 16px 10px;background:var(--ad);border:1px solid rgba(245,158,11,.4);border-radius:var(--r);overflow:hidden}
 .conf-banner:empty{display:none;margin:0}
 .conf-head{padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--amber);text-transform:uppercase}
@@ -102,6 +103,17 @@ body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100
 .conf-row:hover{background:rgba(245,158,11,.1)}
 .conf-nome{font-size:13px;color:var(--tx);font-weight:500}
 .conf-mes{font-family:var(--mono);font-size:10px;color:var(--amber);white-space:nowrap}
+.conf-banner.revcat{background:var(--bld);border-color:rgba(59,130,246,.4);cursor:pointer}
+.conf-banner.revcat:empty{display:none;margin:0}
+.conf-banner.revcat .conf-head{color:var(--blue)}
+.revcat-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--bd)}
+.revcat-row:last-child{border-bottom:none}
+.revcat-info{flex:1;min-width:0}
+.revcat-nome{font-size:13px;color:var(--tx);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.revcat-meta{font-family:var(--mono);font-size:10px;color:var(--mut);margin-top:2px}
+.revcat-sel{background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--rs);color:var(--tx);font-size:12px;padding:5px 6px;max-width:130px}
+.revcat-ok{background:var(--blue);color:#fff;border:none;border-radius:var(--rs);width:28px;height:28px;font-size:14px;cursor:pointer;flex-shrink:0}
+.revcat-skip{background:var(--sur2);border:1px solid var(--bd2);color:var(--mut);border-radius:var(--rs);width:28px;height:28px;font-size:12px;cursor:pointer;flex-shrink:0}
 .bdg.mk{background:var(--gld);color:var(--gold);border:1px solid rgba(234,179,8,.2)}
 .bdg.vr{background:var(--gd);color:var(--green);border:1px solid rgba(34,197,94,.2)}
 .bdg.dj{background:var(--prd);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
@@ -665,6 +677,7 @@ select option{background:#1c1c1c}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="data_extrato_2026.js"></script>
 </head>
 <body>
 
@@ -682,6 +695,7 @@ select option{background:#1c1c1c}
   </div>
   <div class="summ" id="summ"></div>
   <div class="conf-banner" id="conf-banner"></div>
+  <div class="conf-banner revcat" id="revcat-banner" onclick="openRevCat()"></div>
   <div class="frow" id="frow"></div>
 </header>
 
@@ -757,6 +771,18 @@ select option{background:#1c1c1c}
   </div>
   <div class="fg"><label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer"><input type="checkbox" id="s-inicio" style="width:14px;height:14px;accent-color:var(--amber);cursor:pointer"/> <span>Sai no in&#237;cio do m&#234;s</span></label></div>
   <div class="macts"><button class="btn bcn" onclick="fClose('ov-s')">Cancelar</button><button class="btn bsv" onclick="svSingle()">Salvar</button></div>
+</div></div>
+
+<!-- MODAL: REVISAR CATEGORIAS EM LOTE -->
+<div class="ov" id="ov-revcat" onclick="closeOv('ov-revcat',event)">
+<div class="sheet" style="max-height:85vh;display:flex;flex-direction:column">
+  <div class="shdl"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px 8px">
+    <span style="font-size:15px;font-weight:600;color:var(--tx)">&#128203; Revisar categorias</span>
+    <button class="mcl" onclick="fClose('ov-revcat')">&#10005;</button>
+  </div>
+  <div style="padding:0 20px 6px;font-size:11px;color:var(--mut)">Agrupado por nome/descri&#231;&#227;o — escolhe a categoria e aplica pra todos os lan&#231;amentos daquele grupo de uma vez.</div>
+  <div id="revcat-body" style="padding:0 20px 20px;flex:1;overflow-y:auto"></div>
 </div></div>
 
 <!-- MODAL: CONFIGURAÇÕES -->
@@ -1208,6 +1234,34 @@ function seedStephanieSet2026(){
   saveAll();
 }
 
+// ====== RESET TOTAL + CARGA DO EXTRATO REAL (jan-nov/2026) ======
+// Apaga tudo que foi semeado/editado até aqui e substitui pelas transações reais
+// do extrato (InfinitePay + Inter + Sicredi). Roda uma única vez.
+function resetECarregarExtrato2026(){
+  if(ls('abpp_reset_extrato_2026'))return;
+  if(typeof EXTRATO_2026_DATA==='undefined')return; // arquivo de dados não carregou ainda, tenta de novo no próximo boot
+  D={};cards=[];cardRec=[];cardTxns=[];VR={saldoPadrao:0,saldos:{},items:[]};RD=[];WL=[];DV=[];CO={};
+  CATS={...CATS_DEFAULT};
+  Object.entries(EXTRATO_2026_DATA.D).forEach(([mes,items])=>{
+    D[mes]=items.map(i=>({id:uid(),nome:i.nome,valor:i.valor,categoria:i.categoria,tipo:i.tipo,
+      recorrente:!!i.recorrente,status:i.status,obs:i.obs||'',revisar:i.revisar||undefined,
+      createdAt:new Date().toISOString()}));
+  });
+  EXTRATO_2026_DATA.RD.forEach(fonte=>{
+    const meses={};
+    Object.entries(fonte.meses).forEach(([mes,valor])=>{meses[mes]={valor,status:'recebido'}});
+    RD.push({id:uid(),nome:fonte.nome,recorrente:false,obs:'',createdAt:new Date().toISOString(),meses});
+  });
+  setls('abpp_reset_extrato_2026','1');
+  // Aposenta os seeds sintéticos antigos pra sempre — os dados reais do extrato os substituem,
+  // então eles nunca mais devem rodar (nem num perfil novo, nem fora de ordem).
+  setls('abpp_seed_memoria_2026','1');
+  setls('abpp_patch_odoo_off','1');
+  setls('abpp_seed_conferir_set2026','1');
+  setls('abpp_seed_stephanie_set2026','1');
+  saveAll();
+}
+
 // Regras de categorização automática por pessoa/comerciante/palavra-chave conhecidos (memória financeira).
 const AUTO_CAT_RULES=[
   {re:/anna paula (gomes|paula)/,cat:'Transferência interna',tipo:'transferencia'},
@@ -1460,9 +1514,10 @@ function mkDespItem(i,isInicio){
   const extBdg=i.tipo==='extra'?'<span class="bdg ext">Extra</span>':'';
   const inicioBdg=isInicio?'<span class="bdg" style="background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.2)">Início</span>':'';
   const confBdg=i.conferir?'<span class="bdg conf">&#9888; Conferir valor</span>':'';
+  const revBdg=i.revisar?'<span class="bdg revcat" onclick="event.stopPropagation();openRevCat()">&#128203; Revisar categoria</span>':'';
   const attachHtml=i.anexo?`<div style="margin-top:4px"><span class="attach-chip" onclick="event.stopPropagation();viewAttach('${id}')">&#128206; ${esc(i.anexo.name)}</span></div>`:'';
   const itemClick=selMode?`onclick="togSel('${id}')"`:` onclick="openS('${id}')" style="cursor:pointer"`;
-  return `<div class="item ${st}${isSel?' sel-on':''}${isInicio?' inicio-mes':''}" ${itemClick}>${dot}<div class="ib"><div class="ir1"><span class="iname ${st}">${esc(i.nome)}</span><span class="ival">${brl(i.valor)}</span></div><div class="bdgs">${recBdg}${extBdg}${inicioBdg}${confBdg}</div>${obsHtml}${attachHtml}</div><div class="iacts">${acts}</div></div>`;
+  return `<div class="item ${st}${isSel?' sel-on':''}${isInicio?' inicio-mes':''}" ${itemClick}>${dot}<div class="ib"><div class="ir1"><span class="iname ${st}">${esc(i.nome)}</span><span class="ival">${brl(i.valor)}</span></div><div class="bdgs">${recBdg}${extBdg}${inicioBdg}${confBdg}${revBdg}</div>${obsHtml}${attachHtml}</div><div class="iacts">${acts}</div></div>`;
 }
 
 // ====== RENDER DESPESAS ======
@@ -1564,11 +1619,12 @@ function rDesp(){
       const recBdg=i.recorrente?'<span class="bdg rec">Recorrente</span>':'';
       const extBdg=i.tipo==='extra'?'<span class="bdg ext">Extra</span>':'';
       const confBdg=i.conferir?'<span class="bdg conf">&#9888; Conferir valor</span>':'';
+      const revBdg=i.revisar?'<span class="bdg revcat" onclick="event.stopPropagation();openRevCat()">&#128203; Revisar categoria</span>':'';
       const itemOnclick=selMode?' onclick="togSel(\''+i.id+'\')"':'';
       h+='<div class="item '+st+(isSel?' sel-on':'')+'"'+itemOnclick+'>'
         +dot
         +'<div class="ib"><div class="ir1"><span class="iname '+st+'">'+esc(i.nome)+'</span><span class="ival">'+brl(i.valor)+'</span></div>'
-        +'<div class="bdgs">'+recBdg+extBdg+confBdg+'</div>'
+        +'<div class="bdgs">'+recBdg+extBdg+confBdg+revBdg+'</div>'
         +obsHtml
         +'</div><div class="iacts">'+acts+'</div></div>';
     });
@@ -1980,6 +2036,71 @@ function conferirGoto(id,mes){
   openS(id);
 }
 
+// ====== REVISÃO EM LOTE DE CATEGORIAS (itens importados marcados i.revisar=true) ======
+function groupRevisar(){
+  const groups={};
+  Object.keys(D).forEach(mes=>{
+    (D[mes]||[]).forEach(i=>{
+      if(!i.revisar)return;
+      const key=i.nome.trim().toLowerCase();
+      if(!groups[key])groups[key]={key,nome:i.nome.trim(),count:0,total:0};
+      groups[key].count++;
+      groups[key].total+=Number(i.valor||0);
+    });
+  });
+  return Object.values(groups).sort((a,b)=>b.total-a.total);
+}
+function rRevCatBanner(){
+  const el=document.getElementById('revcat-banner');
+  if(!el)return;
+  const groups=groupRevisar();
+  if(!groups.length){el.innerHTML='';return}
+  const totalItens=groups.reduce((a,g)=>a+g.count,0);
+  el.innerHTML='<div class="conf-head">&#128203; '+groups.length+' grupo'+(groups.length>1?'s':'')+' de transações pra categorizar ('+totalItens+' lançamentos) — toca pra revisar</div>';
+}
+let revcatGroupsCache=[];
+function openRevCat(){
+  openOv('ov-revcat');
+  rRevCatModal();
+}
+function rRevCatModal(){
+  const el=document.getElementById('revcat-body');
+  if(!el)return;
+  revcatGroupsCache=groupRevisar();
+  if(!revcatGroupsCache.length){el.innerHTML='<div class="empty"><div class="eico">&#10003;</div><p>Nada pendente de revisão.</p></div>';return}
+  const catOpts=Object.entries(CATS).map(([k,v])=>'<option value="'+esc(k)+'">'+esc(v)+'</option>').join('');
+  el.innerHTML=revcatGroupsCache.map((g,idx)=>
+    '<div class="revcat-row">'
+    +'<div class="revcat-info"><div class="revcat-nome">'+esc(g.nome)+'</div><div class="revcat-meta">'+g.count+'x &middot; '+brl(g.total)+'</div></div>'
+    +'<select class="revcat-sel" id="revcat-sel-'+idx+'"><option value="">categoria...</option>'+catOpts+'</select>'
+    +'<button class="revcat-ok" onclick="revcatApply('+idx+')" title="Aplicar">&#10003;</button>'
+    +'<button class="revcat-skip" onclick="revcatDismiss('+idx+')" title="Deixar como Outros">&#10005;</button>'
+    +'</div>'
+  ).join('');
+}
+function revcatApplyToGroup(key,fn){
+  Object.keys(D).forEach(mes=>{
+    (D[mes]||[]).forEach(i=>{
+      if(i.revisar&&i.nome.trim().toLowerCase()===key)fn(i);
+    });
+  });
+}
+function revcatApply(idx){
+  const g=revcatGroupsCache[idx];if(!g)return;
+  const sel=document.getElementById('revcat-sel-'+idx);
+  const cat=sel?sel.value:'';
+  if(!cat){sel.focus();return}
+  revcatApplyToGroup(g.key,i=>{i.categoria=cat;delete i.revisar;});
+  saveAll();
+  rRevCatModal();rRevCatBanner();rContent();
+}
+function revcatDismiss(idx){
+  const g=revcatGroupsCache[idx];if(!g)return;
+  revcatApplyToGroup(g.key,i=>{delete i.revisar;});
+  saveAll();
+  rRevCatModal();rRevCatBanner();rContent();
+}
+
 function rContent(){
   // Semeia os recorrentes do mês (contas fixas, renda, cartão) ANTES de qualquer
   // renderização — antes isso só rodava dentro da aba dona (rDesp/rRend/rCart), então
@@ -1994,7 +2115,7 @@ function rContent(){
   else if(tab==='dv')rDV();
   else if(tab==='desj')rDesj();
   else if(tab==='an')rAnual();
-  rSumm();rFrow();rConferir();
+  rSumm();rFrow();rConferir();rRevCatBanner();
   adjHdr();
 }
 function render(){document.getElementById('mlabel').textContent=mlbl();rFab();rContent()}
@@ -3944,6 +4065,7 @@ document.addEventListener('touchend',e=>{
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
+resetECarregarExtrato2026();
 seedMemoria2026();
 patchOdooDesativado();
 seedConferirSet2026();

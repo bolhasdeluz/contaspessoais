@@ -1262,6 +1262,63 @@ function resetECarregarExtrato2026(){
   saveAll();
 }
 
+// Reconciliação de março/2026: o CSV original trazia "PAGAMENTO PIX"/"RECEBIMENTO PIX"
+// genéricos (sem nome) nesse mês; os prints do extrato real da Sicredi revelaram os nomes.
+// Casa por valor (a data do CSV estava ~2 dias deslocada da data real do app) e já marca
+// Anna Paula Gomes como transferência interna (não conta como gasto/renda real).
+function patchMarco2026NomesPix(){
+  if(ls('abpp_patch_marco2026_pix'))return;
+  const mapD=[
+    {valor:7.18,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+    {valor:27.97,nome:'A D Home Market Ltda',categoria:'Mercado'},
+    {valor:126.36,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+    {valor:20.42,nome:'SHPP Brasil Instituição de Pag',categoria:'Parcelados/BNPL'},
+    {valor:23.48,nome:'A D Home Market Ltda',categoria:'Mercado'},
+    {valor:54.44,nome:'Panvel Farmácias',categoria:'Farmácia'},
+    {valor:50.00,nome:'Cuidare Clínica Veterinária',categoria:'Pet'},
+    {valor:18.00,nome:'Multiplan Administradora',categoria:'Lazer'},
+    {valor:36.30,nome:'Cobasi',categoria:'Pet'},
+    {valor:206.71,nome:'Vindi Pagamentos Online',categoria:'Parcelados/BNPL'},
+    {valor:21.98,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+    {valor:21.98,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+    {valor:13.98,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+    {valor:20.98,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+    {valor:55.98,nome:'Uber do Brasil Tecnologia Ltda.',categoria:'Transporte'},
+    {valor:149.10,nome:'Supermercado Gecepel',categoria:'Mercado'},
+    {valor:147.84,nome:'Rodrigo Longoni Silveira',categoria:'Pix para pessoas'},
+    {valor:325.68,nome:'Zaffari',categoria:'Mercado'},
+    {valor:800.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+    {valor:400.00,nome:'Murilo Goulart Fraga',categoria:'Pix para pessoas'},
+    {valor:117.08,nome:'Claro',categoria:'Internet/Celular'},
+    {valor:400.00,nome:'Sonia Regina Batistella Schneider',categoria:'Aluguel'},
+    {valor:180.90,nome:'Telefônica Bras (Vivo)',categoria:'Internet/Celular'},
+    {valor:229.29,nome:'Tania do Carmo Gomes',categoria:'Pix para pessoas'},
+    {valor:56.85,nome:'PagueVeloz',categoria:'Dívida/Crédito rotativo'},
+    {valor:270.00,nome:'Sonia Regina Batistella Schneider',categoria:'Aluguel'},
+    {valor:16.96,nome:'FVE Comércio de Chocolates Ltda',categoria:'Restaurantes/Lanches'},
+    {valor:37.89,nome:'Rodrigo Longoni Silveira',categoria:'Pix para pessoas'},
+    {valor:1000.00,nome:'Anna Paula Gomes',categoria:'Transferência interna',tipo:'transferencia'},
+  ];
+  const mes='2026-03';
+  if(D[mes]){
+    mapD.forEach(m=>{
+      const item=D[mes].find(i=>i.revisar&&i.nome.trim().toUpperCase()==='PAGAMENTO PIX'&&Math.abs(i.valor-m.valor)<0.005);
+      if(item){item.nome=m.nome;item.categoria=m.categoria;if(m.tipo)item.tipo=m.tipo;delete item.revisar;}
+    });
+  }
+  // Recebimentos "Anna Paula Gomes" identificados nos prints (26,41+8,74+5,51+12,69) —
+  // eram transferência interna, não renda real. Remove do total de renda do mês.
+  const anaRecebidoMarco=26.41+8.74+5.51+12.69;
+  const fonteDiversos=RD.find(r=>r.nome==='Pix recebido (diversos)');
+  if(fonteDiversos&&fonteDiversos.meses[mes]){
+    const novoValor=Math.round((fonteDiversos.meses[mes].valor-anaRecebidoMarco)*100)/100;
+    if(novoValor<=0.01)delete fonteDiversos.meses[mes];
+    else fonteDiversos.meses[mes].valor=novoValor;
+  }
+  setls('abpp_patch_marco2026_pix','1');
+  saveAll();
+}
+
 // Regras de categorização automática por pessoa/comerciante/palavra-chave conhecidos (memória financeira).
 const AUTO_CAT_RULES=[
   {re:/anna paula (gomes|paula)/,cat:'Transferência interna',tipo:'transferencia'},
@@ -4070,6 +4127,7 @@ seedMemoria2026();
 patchOdooDesativado();
 seedConferirSet2026();
 seedStephanieSet2026();
+patchMarco2026NomesPix();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>

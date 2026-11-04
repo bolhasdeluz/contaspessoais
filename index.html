@@ -1523,6 +1523,7 @@ const AUTO_CAT_RULES=[
   {re:/\bcobasi\b/,cat:'Pet'},
   {re:/pet center/,cat:'Pet'},
   {re:/panvel farm[áa]cias/,cat:'Farmácia'},
+  {re:/99\s*food/,cat:'Transporte'},
 ];
 function autoCategorize(nomeRaw,valor){
   const n=String(nomeRaw||'').toLowerCase();
@@ -1567,6 +1568,42 @@ function patchExtrairNomesPixDetalhado(){
     });
   });
   setls('abpp_patch_extrai_nomes_pix','1');
+  saveAll();
+}
+
+// Reaplica as regras atuais em TODO lançamento ainda marcado pra revisão (não só os com
+// prefixo "PIX - documento"). Pega casos como "Ferragem Tarrago" que já tinham nome limpo
+// desde a importação original, mas cuja regra só foi criada depois.
+function patchRecategorizarRevisarComRegrasAtuais(){
+  if(ls('abpp_patch_recat_revisar_v2'))return;
+  Object.keys(D).forEach(mes=>{
+    (D[mes]||[]).forEach(i=>{
+      if(!i.revisar)return;
+      const auto=autoCategorize(i.nome,i.valor);
+      if(auto&&auto.cat){i.categoria=auto.cat;if(auto.tipo)i.tipo=auto.tipo;delete i.revisar;}
+    });
+  });
+  // "Parece nome de pessoa" errou em alguns comércios (ex: Cartão Ferragem Tarragô) durante
+  // a importação original, antes dessas regras existirem — corrige quem já caiu como
+  // "Pix para pessoas" mas hoje bate com uma regra mais específica.
+  Object.keys(D).forEach(mes=>{
+    (D[mes]||[]).forEach(i=>{
+      if(i.categoria!=='Pix para pessoas')return;
+      const auto=autoCategorize(i.nome,i.valor);
+      if(auto&&auto.cat&&auto.cat!=='Pix para pessoas'){i.categoria=auto.cat;if(auto.tipo)i.tipo=auto.tipo;}
+    });
+  });
+  // Raquel da Silva Jacintho aparece com um número de documento colado antes do nome em
+  // formatos diferentes ("22332920 Raquel...", "22.332.920 RAQUEL...") — resolve direto.
+  const raquelValores=[88,168.50,186.50];
+  Object.keys(D).forEach(mes=>{
+    (D[mes]||[]).forEach(i=>{
+      if(i.revisar&&/raquel da silva jacintho/i.test(i.nome)&&raquelValores.some(v=>Math.abs(i.valor-v)<0.005)){
+        i.nome='Raquel da Silva Jacintho';i.categoria='Pix para pessoas';delete i.revisar;
+      }
+    });
+  });
+  setls('abpp_patch_recat_revisar_v2','1');
   saveAll();
 }
 function brl(v){return'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -4343,6 +4380,7 @@ patchAbrMaiJun2026NomesPix();
 patchJunJulAgo2026NomesPix();
 patchAgoRestante2026();
 patchExtrairNomesPixDetalhado();
+patchRecategorizarRevisarComRegrasAtuais();
 if(!selCard&&cards.length)selCard=cards[0].id;
 setTab('saldo');
 </script>
